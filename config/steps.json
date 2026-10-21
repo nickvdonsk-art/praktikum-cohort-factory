@@ -2,12 +2,12 @@
   "_comment": "Селекторы DOM админки Практикума. Заполнены по HTML модалки «Создание когорты» и прошлым находкам (поиск, кнопка «Добавить когорту»). Если вёрстка поменяется — ассистент правит здесь и в automation/server.py.",
   "fields": {
     "squad_type": {
-      "selector": ".edit-card__body #squad_type",
+      "selector": ".edit-card__body .edit-card__field:has(label[for='squad_type'])",
       "kind": "dropdown",
       "label": "Тип когорты"
     },
     "cohort": {
-      "selector": ".edit-card__body #cohort",
+      "selector": ".edit-card__body .edit-card__field:has(label[for='cohort'])",
       "kind": "dropdown",
       "label": "Шаблон имени"
     },
@@ -67,7 +67,7 @@
       "label": "Открыт"
     },
     "track": {
-      "selector": ".edit-card__body #track",
+      "selector": ".edit-card__body .edit-card__field:has(label[for='track'])",
       "kind": "dropdown",
       "label": "Трек"
     },

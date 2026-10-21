@@ -16,8 +16,15 @@ Excel, поэтому Excel — основной путь, скриншот — 
     python3 automation/date_parser.py --slug math-for-da-ds --file input/dates/График запусков.xlsx
     python3 automation/date_parser.py --slug math-for-da-ds --file input/dates/скрин.png
 
-Пишет конфиг: config/dates.json  {номер когорты: "ГГГГ-ММ-ДД"}
+Пишет конфиг: config/dates.json
+    {номер когорты: {
+        "begin":         "ГГГГ-ММ-ДД",   # кол. C — Дата старта когорты
+        "end":           "ГГГГ-ММ-ДД",   # кол. D — Дата завершения обучения
+        "lite_payment":  "ГГГГ-ММ-ДД",   # кол. H — Мягкий дедлайн (оплатить до)
+        "payment":       "ГГГГ-ММ-ДД"    # кол. I — Дедлайн добора (жёсткий)
+    }}
 """
+from __future__ import annotations
 from __future__ import annotations
 
 import argparse
@@ -35,6 +42,12 @@ INPUT_DIR = ROOT / "input" / "dates"
 # поэтому матчим по подстроке, без учёта регистра и эмодзи.
 UPSKILL_SHEETS = ("upskill",)
 RESKILL_SHEETS = ("reskill",)
+
+# Колонки в листах Upskill/Reskill (1-индексные, как в Excel):
+#   B (2) — cohort_name                C (3) — Дата старта когорты
+#   D (4) — Дата завершения обучения   H (8) — Мягкий дедлайн (оплатить до)
+#   I (9) — Дедлайн добора (жёсткий)
+COL_NAME, COL_BEGIN, COL_END, COL_LITE, COL_PAYMENT = 2, 3, 4, 8, 9
 
 # «cohort_» или пусто (когда в ячейке только «data-analyst_201» — такое бывает)
 COHORT_RE = re.compile(r"^([\w-]+?)(?:_cohort)?_(\d{2,3})$")
@@ -76,16 +89,8 @@ def _norm_date(value) -> str | None:
     return f"{year:04d}-{month:02d}-{day:02d}"
 
 
-def _parse_excel(path: Path, slug: str) -> dict[int, str]:
+def _parse_excel(path: Path, slug: str) -> dict[int, dict[str, str]]:
     """Читаем листы Upskill и Reskill из .xlsx."""
-    try:
-        import pandas as pd
-    except ImportError:
-        print("openpyxl/pandas не найден. Поставь зависимости: pip install -r requirements.txt")
-        sys.exit(1)
-
-    found: dict[int, tuple[str, int]] = {}  # номер -> (дата, строка)
-
     # pd.read_excel с sheet_name=None читает ВСЕ 40 листов сразу — медленно
     # и лишние листы не нужны. Открываем вручную и читаем только нужные.
     try:
@@ -93,6 +98,8 @@ def _parse_excel(path: Path, slug: str) -> dict[int, str]:
     except ImportError:
         print("openpyxl не найден. Поставь зависимости: pip install -r requirements.txt")
         sys.exit(1)
+
+    found: dict[int, dict[str, str]] = {}  # номер -> {ключ: дата}
 
     wb = openpyxl.load_workbook(path, read_only=True, data_only=True)
     wanted = [name for name in wb.sheetnames
@@ -105,39 +112,45 @@ def _parse_excel(path: Path, slug: str) -> dict[int, str]:
     for sheet_name in wanted:
         ws = wb[sheet_name]
         for rownum, row in enumerate(ws.iter_rows(min_row=3), start=3):
-            col_name = row[1].value  # B — cohort_name
-            col_date = row[2].value  # C — Дата старта когорты
+            col_name = row[COL_NAME - 1].value  # B — cohort_name
             if not isinstance(col_name, str):
                 continue
             name = col_name.strip()
-            date = _norm_date(col_date)
             # Матчим только когорты указанного слага
             m = re.match(rf"^{re.escape(slug)}(?:_cohort)?_(\d+)$", name)
             if not m:
                 continue
             num = int(m.group(1))
-            if date is None:
+            dates = {
+                "begin":        _norm_date(row[COL_BEGIN - 1].value),   # C — старт
+                "end":          _norm_date(row[COL_END - 1].value),     # D — завершение
+                "lite_payment": _norm_date(row[COL_LITE - 1].value),    # H — мягкий дедлайн
+                "payment":      _norm_date(row[COL_PAYMENT - 1].value), # I — дедлайн добора
+            }
+            if dates["begin"] is None:
                 print(f"  ⚠ строка {rownum}: {name} — дату старта не распознал, пропускаю")
                 continue
             # Если есть дубли (строки дублируются в разных листах) — берём первый
             # и помечаем повтор.
             if num in found:
-                print(f"  ⚠ строка {rownum}: {name} уже была (дата {found[num][0]}), пропускаю дубль")
+                print(f"  ⚠ строка {rownum}: {name} уже была, пропускаю дубль")
                 continue
-            found[num] = (date, rownum)
+            found[num] = dates
 
     wb.close()
-    return {k: v[0] for k, v in found.items()}
+    return found
 
 
 # ---------------------------------------------------------------------------
 # OCR-путь (скриншот таблицы) — запасной. Excel надёжнее, используй его.
 # ---------------------------------------------------------------------------
-def _parse_image(path: Path, slug: str) -> dict[int, str]:
+def _parse_image(path: Path, slug: str) -> dict[int, dict[str, str]]:
     """Распознаём даты со скриншота таблицы через tesseract.
 
     Работает хуже Excel и зависит от качества скриншота. Excel всегда
     надёжнее — это основной путь, скриншот только запасной.
+    По скриншоту заполняем только дату старта (begin) — дедлайны и дату
+    завершения OCR ненадёжно снимает; их при необходимости добираем из Excel.
     """
     try:
         from PIL import Image
@@ -163,7 +176,7 @@ def _parse_image(path: Path, slug: str) -> dict[int, str]:
     words = [w for w in slug.split("-") if w]
     slug_prefix = r"[^0-9]".join(words)  # «math for da ds»
 
-    found: dict[int, str] = {}
+    found: dict[int, dict[str, str]] = {}
     for line in text.splitlines():
         # Дата ПЕРВОГО когорты - это «Дата старта». В строке с когортой дат
         # обычно несколько: старт, мягкий дедлайн, дедлайн добора.
@@ -181,7 +194,10 @@ def _parse_image(path: Path, slug: str) -> dict[int, str]:
         num = int(m_num.group(1))
         if num == 0:
             continue
-        found.setdefault(num, dates[-1])  # старт — самая поздняя дата в строке
+        found.setdefault(num, {
+            "begin": dates[-1],  # старт — самая поздняя дата в строке
+            "end": "", "lite_payment": "", "payment": "",
+        })
     return found
 
 
@@ -225,6 +241,12 @@ def main() -> None:
     print(f"Записано в {DATE_FILE}")
     print("Первые 5:", json.dumps(dict(list(ordered.items())[:5]), ensure_ascii=False))
     print("Последние 5:", json.dumps(dict(list(ordered.items())[-5:]), ensure_ascii=False))
+    # Сколько из них без даты окончания/дедлайнов (может быть для OCR-пути)
+    missing = [n for n, v in ordered.items()
+               if not v.get("end") or not v.get("lite_payment") or not v.get("payment")]
+    if missing:
+        print(f"⚠ У когорт {missing[:10]}{'…' if len(missing) > 10 else ''} "
+              f"нет даты окончания/дедлайнов — если это Excel, проверь заполнение колонок D/H/I.")
 
 
 if __name__ == "__main__":

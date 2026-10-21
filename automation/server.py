@@ -10,9 +10,13 @@ API:     http://127.0.0.1:8742/docs  (Swagger) — только localhost.
 """
 from __future__ import annotations
 
+import concurrent.futures
+import functools
 import json
 import os
+import queue
 import tempfile
+import threading
 from pathlib import Path
 
 from fastapi import FastAPI, HTTPException
@@ -38,6 +42,22 @@ app.add_middleware(
 _browser = None
 _context = None
 _page: Page | None = None
+
+# Playwright sync нельзя звать из разных потоков: FastAPI исполняет эндпоинты
+# в пуле потоков, и параллельный вызов из другого потока ломает greenlet
+# («Cannot switch to a different thread»). Поэтому ВСЕ операции с браузером
+# гоняем через один выделенный поток-исполнитель.
+_pw_executor = concurrent.futures.ThreadPoolExecutor(max_workers=1,
+                                                      thread_name_prefix="pw")
+
+
+def _pw_serialized(fn):
+    """Декоратор: выполняет тело эндпоинта в единственном pw-потоке."""
+    @functools.wraps(fn)
+    def wrapper(*args, **kwargs):
+        fut = _pw_executor.submit(fn, *args, **kwargs)
+        return fut.result()
+    return wrapper
 
 
 # --- модели --------------------------------------------------------------------
@@ -70,9 +90,17 @@ class TickRequest(BaseModel):
 
 
 class CreateRequest(BaseModel):
-    """Заполнить и сохранить одну когорту по эталону + дате старта."""
+    """Заполнить и сохранить одну когорту по эталону + датам из Excel.
+
+    date_end / lite_payment_deadline / payment_deadline — значения из Excel
+    (колонки D / H / I). Используются как контроль: если форма автоподставляет
+    другие значения (или не подставляет вовсе) — переопределяем их вручную.
+    """
     cohort_number: int
-    date_begin: str = Field(description="Дата старта в формате YYYY-MM-DD")
+    date_begin: str = Field(description="Дата старта (кол. C Excel) в формате YYYY-MM-DD")
+    date_end: str | None = Field(default=None, description="Дата завершения обучения (кол. D Excel)")
+    lite_payment_deadline: str | None = Field(default=None, description="Мягкий дедлайн (кол. H Excel)")
+    payment_deadline: str | None = Field(default=None, description="Дедлайн добора (кол. I Excel)")
     template: dict = Field(default_factory=dict, description="Переопределения полей эталона")
     confirm_reference: bool = True
 
@@ -94,6 +122,8 @@ def _active_page() -> Page:
     if _page is None:
         raise HTTPException(503, "Браузер не открыт. Вызови /api/open.")
     return _page
+
+
 
 
 def _wait(page: Page, selector: str, timeout_ms: int) -> None:
@@ -129,9 +159,19 @@ def _visible_text(page: Page) -> str:
 
 
 def _dropdown_select(page: Page, trigger: str, option: str, timeout_ms: int = 15000) -> None:
-    """Открыть дропдаун по триггеру и выбрать пункт по тексту."""
+    """Открыть дропдаун по триггеру и выбрать пункт по тексту.
+
+    Триггером м.б. контейнер поля (label[for=...]) — тогда сначала кликаем
+    по его кнопке-тумблеру .dropdown__toggle.
+    """
     _wait(page, trigger, timeout_ms)
-    page.locator(trigger).first.click()
+    base = page.locator(trigger).first
+    toggle = base.locator(":scope .dropdown__toggle")
+    if toggle.count() > 0:
+        toggle.first.click()
+    else:
+        base.click()
+    page.wait_for_timeout(200)
     item = page.locator(
         f".dropdown__item:visible, [role=option]:visible, .prisma-combobox__option:visible"
     ).filter(has_text=option)
@@ -151,12 +191,33 @@ def _checkbox(page: Page, name_or_selector: str) -> bool:
 # --- логика одной когорты --------------------------------------------------------
 
 def _open_cohort_form(page: Page, slug: str | None = None) -> None:
-    """Открыть форму создания когорты (страница уже должна быть на /squads-faculties)."""
+    """Открыть форму создания когорты (страница уже должна быть на /squads-faculties).
+
+    Поиск факультета — выпадающий список: слаг сначала вводится в поле поиска,
+    затем нужный пункт (с текстом слага) выбирается из открывшегося списка.
+    Без выбора пункта кнопка «Добавить когорту» недоступна.
+    """
     if slug:
         _wait(page, STEPS["controls"]["profession_search"]["selector"], 15000)
         search = page.locator(STEPS["controls"]["profession_search"]["selector"]).first
         search.fill(slug)
-        page.wait_for_timeout(700)
+        page.wait_for_timeout(400)
+        # Список открывается не сразу после вставки — «дёргаем» поле:
+        # стираем последний символ и печатаем его обратно (подсказка пользователя).
+        search.press("Backspace")
+        search.type(slug[-1])
+        page.wait_for_timeout(800)  # дать списку открыться
+        # выбрать пункт списка, содержащий слаг (по тексту, видимый)
+        item = page.locator(
+            ".prisma-combobox__option:visible, [role=option]:visible, "
+            "li:visible, .dropdown__item:visible"
+        ).filter(has_text=slug)
+        try:
+            item.first.click(timeout=8000)
+        except PWTimeout:
+            # fallback — точечно по тексту в любом элементе под поиском
+            page.locator(f"text='{slug}'").first.click(timeout=5000)
+        page.wait_for_timeout(1200)  # дождаться перехода на страницу факультета
     _wait(page, STEPS["buttons"]["add_cohort"]["selector"], 15000)
     page.locator(STEPS["buttons"]["add_cohort"]["selector"]).first.click()
     _wait(page, "div[data-test-id='edit-card']", 15000)
@@ -224,6 +285,7 @@ def status():
 
 
 @app.post("/api/open")
+@_pw_serialized
 def open_browser(req: OpenRequest):
     global _browser, _context, _page
     from playwright.sync_api import sync_playwright
@@ -238,6 +300,7 @@ def open_browser(req: OpenRequest):
 
 
 @app.get("/api/snapshot")
+@_pw_serialized
 def snapshot():
     page = _active_page()
     page.wait_for_timeout(600)
@@ -245,6 +308,7 @@ def snapshot():
 
 
 @app.post("/api/click")
+@_pw_serialized
 def click(req: ClickRequest):
     page = _active_page()
     _wait(page, req.selector, req.timeout_ms)
@@ -253,6 +317,7 @@ def click(req: ClickRequest):
 
 
 @app.post("/api/type")
+@_pw_serialized
 def type_text(req: TypeRequest):
     page = _active_page()
     _wait(page, req.selector, 10000)
@@ -263,6 +328,7 @@ def type_text(req: TypeRequest):
 
 
 @app.post("/api/select")
+@_pw_serialized
 def select(req: SelectRequest):
     page = _active_page()
     _dropdown_select(page, req.selector, req.option)
@@ -270,6 +336,7 @@ def select(req: SelectRequest):
 
 
 @app.post("/api/tick")
+@_pw_serialized
 def tick(req: TickRequest):
     page = _active_page()
     _wait(page, req.selector, 10000)
@@ -282,6 +349,7 @@ def tick(req: TickRequest):
 
 
 @app.post("/api/search_slug")
+@_pw_serialized
 def search_slug(body: dict):
     """Ввести слаг в поиск факультетов и нажать «Добавить когорту»."""
     page = _active_page()
@@ -293,6 +361,7 @@ def search_slug(body: dict):
 
 
 @app.post("/api/open_cohort_form")
+@_pw_serialized
 def open_cohort_form(body: dict):
     page = _active_page()
     if body.get("slug"):
@@ -303,6 +372,7 @@ def open_cohort_form(body: dict):
 
 
 @app.get("/api/current_form")
+@_pw_serialized
 def current_form():
     """Прочитать заполненные поля открытой формы (после логина) — эталон на лету."""
     page = _active_page()
@@ -310,6 +380,7 @@ def current_form():
 
 
 @app.post("/api/set_template_from_form")
+@_pw_serialized
 def set_template_from_form(body: dict):
     """Взять значения открытой формы и записать в config/template.json.
     Кураторы всегда пустые (их заполняет человек при создании)."""
@@ -332,6 +403,7 @@ def set_template_from_form(body: dict):
 
 
 @app.post("/api/create_cohort")
+@_pw_serialized
 def create_cohort(req: CreateRequest):
     """Полный сценарий на одну когорту: форма → заполнение → Сохранить."""
     page = _active_page()
@@ -359,8 +431,87 @@ def create_cohort(req: CreateRequest):
     loc.fill("")
     loc.fill(date_begin)
 
+    def _checkbox_value(name: str) -> bool | None:
+        """Текущее состояние чекбокса (или None, если не нашли)."""
+        if name not in STEPS["fields"]:
+            return None
+        try:
+            return _loc(page, name).first.is_checked()
+        except Exception:
+            return None
+
+    def _set_date_field(name: str, value: str | None) -> bool:
+        """Вписать дату в поле (если оно разблокировано). Возвращает True, если поле заполнено."""
+        if not value or name not in STEPS["fields"]:
+            return False
+        try:
+            loc = _loc(page, name).first
+            loc.fill("")
+            loc.fill(value)
+            return True
+        except Exception:
+            return False
+
+    def _date_value(name: str) -> str:
+        """Текущее значение поля-даты (что автоподставилось)."""
+        try:
+            return _loc(page, name).first.input_value().strip()
+        except Exception:
+            return ""
+
+    # --- Проверка «Дата окончания» (date_end) ---
+    # Если из Excel передана дата завершения обучения, а форма автоподставила
+    # другую (или не подставила) — снимаем «вычислить автоматически» и вписываем вручную.
+    # end_overridden запоминаем, чтобы в финальном блоке не включить автовычисление обратно.
+    end_overridden = False
+    need_end_manual = False
+    if req.date_end:
+        auto_end = _checkbox_value("auto_compute_date_end")
+        cur_end = _date_value("date_end")
+        if auto_end is not None and auto_end:
+            if cur_end and cur_end != req.date_end:
+                need_end_manual = True
+            elif not cur_end:
+                need_end_manual = True
+        elif cur_end != req.date_end:
+            need_end_manual = True
+    if need_end_manual:
+        box = "auto_compute_date_end"
+        if box in STEPS["fields"]:
+            loc = _loc(page, box).first
+            try:
+                if loc.is_checked():
+                    loc.click()
+            except Exception:
+                pass
+        _set_date_field("date_end", req.date_end)
+        end_overridden = True
+
+    # --- Проверка дедлайнов: мягкий + дедлайн добора ---
+    # Если поля автозаполнились — ничего не делаем. Если пустые и переданы
+    # значения из Excel — снимаем автовычисление и вписываем вручную.
+    missing_deadlines = False
+    for fname, xl_key in (("lite_payment_deadline", "lite_payment_deadline"),
+                          ("payment_deadline", "payment_deadline")):
+        if getattr(req, xl_key, None) and not _date_value(fname):
+            missing_deadlines = True
+    if missing_deadlines:
+        box = "auto_compute_deadline_dates"
+        if box in STEPS["fields"]:
+            loc = _loc(page, box).first
+            try:
+                if loc.is_checked():
+                    loc.click()
+            except Exception:
+                pass
+        _set_date_field("lite_payment_deadline", req.lite_payment_deadline)
+        _set_date_field("payment_deadline", req.payment_deadline)
+
     for box in ("is_open", "is_new_documents_flow",
                 "auto_compute_deadline_dates", "auto_compute_date_end"):
+        # Если дату окончания переопределили вручную — автовычисление не включаем.
+        if box == "auto_compute_date_end" and end_overridden:
+            continue
         want = req.template.get(box)
         if want is not None and box in STEPS["fields"]:
             loc = _loc(page, box).first
@@ -394,12 +545,87 @@ def create_cohort(req: CreateRequest):
     saver.click()
     page.wait_for_timeout(1200)
 
-    return {"ok": True, "cohort_number": num, "date_begin": date_begin,
+    return {"ok": True, "cohort_number": num,
+            "date_begin": date_begin,
+            "date_end": req.date_end,
+            "lite_payment_deadline": req.lite_payment_deadline,
+            "payment_deadline": req.payment_deadline,
+            "date_end_overridden": end_overridden,
             "url": page.url,
             "note": "Проверь в админке, что когорта создана."}
 
 
+@app.post("/api/dom")
+@_pw_serialized
+def dom_fragment(body: dict):
+    """Вернуть html-фрагмент, содержащий искомую подстроку (например, номер когорты)."""
+    page = _active_page()
+    needle = (body.get("needle") or "").strip()
+    if not needle:
+        raise HTTPException(422, "Нужен needle")
+    try:
+        els = page.locator(f"text='{needle}'")
+        n = els.count()
+        rows = []
+        for i in range(min(n, 6)):
+            el = els.nth(i)
+            html = el.evaluate("e => e.outerHTML")
+            rows.append(html[:1500])
+        return {"count": n, "htmls": rows}
+    except Exception as e:
+        raise HTTPException(500, str(e))
+
+
+@app.post("/api/dom_modal")
+@_pw_serialized
+def dom_modal():
+    """Вернуть HTML открытой модалки (для диагностики структуры формы)."""
+    page = _active_page()
+    sel = "div[data-test-id='edit-card']"
+    try:
+        loc = page.locator(sel).first
+        loc.wait_for(state="visible", timeout=5000)
+        html = loc.evaluate("e => e.outerHTML")
+        return {"found": True, "selector": sel, "html": html[:6000]}
+    except Exception:
+        # fallback: собрать все edit-card в любом виде
+        parts = []
+        for sel2 in ("[class*='edit-card']", "[class*='editCard']", "[class*='modal']"):
+            try:
+                n = page.locator(sel2).count()
+                if n:
+                    first = page.locator(sel2).first
+                    parts.append((sel2, n, first.evaluate("e => e.outerHTML")[:1500]))
+            except Exception:
+                pass
+        return {"found": False, "candidates": parts}
+
+
+@app.post("/api/hover")
+@_pw_serialized
+def hover(body: dict):
+    """Навести мышь на элемент (по селектору или по тексту) — например, чтобы
+    в строке когорты появилась кнопка «Редактировать»."""
+    page = _active_page()
+    selector = (body.get("selector") or "").strip()
+    text = (body.get("text") or "").strip()
+    if not selector and not text:
+        raise HTTPException(422, "Нужен selector или text")
+    try:
+        if text:
+            loc = page.get_by_text(text, exact=False).first
+        else:
+            loc = page.locator(selector).first
+        loc.scroll_into_view_if_needed(timeout=8000)
+        loc.hover(timeout=8000)
+    except PWTimeout:
+        raise HTTPException(404, f"Не найден элемент для hover: {selector or text}")
+    page.wait_for_timeout(600)  # дать появиться кнопкам строки
+    return {"ok": True, "target": text or selector}
+
+
 @app.post("/api/screenshot")
+@_pw_serialized
 def screenshot():
     page = _active_page()
     path = Path(tempfile.gettempdir()) / f"cohort_screen_{os.getpid()}.png"
