@@ -1,0 +1,372 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Заводилка когорт by OMS — инструкция</title>
+<style>
+  :root {
+    --bg: #0d1117;
+    --bg-soft: #161b22;
+    --card: #1c2128;
+    --border: #2d333b;
+    --text: #e6edf3;
+    --text-dim: #9198a1;
+    --accent: #58a6ff;
+    --accent-soft: #1f3a5f;
+    --green: #3fb950;
+    --green-soft: #12331c;
+    --yellow: #d29922;
+    --yellow-soft: #2e2410;
+    --red: #f85149;
+    --red-soft: #2d1517;
+    --radius: 12px;
+    --max-w: 880px;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  html { scroll-behavior: smooth; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, sans-serif;
+    line-height: 1.7;
+    -webkit-font-smoothing: antialiased;
+  }
+  .wrap { max-width: var(--max-w); margin: 0 auto; padding: 0 24px; }
+
+  /* ---------- nav ---------- */
+  nav {
+    position: sticky; top: 0; z-index: 10;
+    background: rgba(13, 17, 23, 0.85);
+    backdrop-filter: blur(12px);
+    border-bottom: 1px solid var(--border);
+  }
+  nav .inner {
+    max-width: var(--max-w); margin: 0 auto; padding: 14px 24px;
+    display: flex; align-items: center; justify-content: space-between; gap: 16px;
+  }
+  .brand { display: flex; align-items: center; gap: 10px; font-weight: 700; font-size: 17px; }
+  .brand .dot { width: 10px; height: 10px; border-radius: 3px; background: var(--accent); box-shadow: 0 0 12px var(--accent); }
+  .nav-links { display: flex; gap: 20px; flex-wrap: wrap; }
+  .nav-links a { color: var(--text-dim); text-decoration: none; font-size: 14px; }
+  .nav-links a:hover { color: var(--text); }
+
+  /* ---------- hero ---------- */
+  .hero { padding: 72px 0 48px; text-align: center; }
+  .hero .kicker {
+    display: inline-block; font-size: 13px; font-weight: 600;
+    color: var(--accent); border: 1px solid var(--accent-soft);
+    background: rgba(88, 166, 255, 0.08); padding: 5px 14px; border-radius: 999px;
+    margin-bottom: 20px; letter-spacing: 0.4px;
+  }
+  .hero h1 { font-size: 44px; line-height: 1.15; font-weight: 800; letter-spacing: -0.5px; margin-bottom: 16px; }
+  .hero h1 .grad {
+    background: linear-gradient(90deg, #58a6ff, #a371f7);
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .hero p { font-size: 18px; color: var(--text-dim); max-width: 640px; margin: 0 auto 32px; }
+  .hero .cta { display: flex; gap: 14px; justify-content: center; flex-wrap: wrap; }
+  .btn {
+    display: inline-block; padding: 12px 26px; border-radius: 8px;
+    font-size: 15px; font-weight: 600; text-decoration: none; transition: transform 0.12s, box-shadow 0.12s;
+  }
+  .btn:hover { transform: translateY(-1px); }
+  .btn-primary { background: var(--accent); color: #06101f; box-shadow: 0 4px 20px rgba(88, 166, 255, 0.25); }
+  .btn-primary:hover { box-shadow: 0 6px 28px rgba(88, 166, 255, 0.35); }
+  .btn-ghost { border: 1px solid var(--border); color: var(--text); background: var(--bg-soft); }
+  .btn-ghost:hover { border-color: var(--text-dim); }
+
+  /* metrics */
+  .metrics { display: grid; grid-template-columns: repeat(auto-fit, minmax(160px, 1fr)); gap: 16px; margin-top: 40px; }
+  .metric {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 18px 16px; text-align: center;
+  }
+  .metric .num { font-size: 28px; font-weight: 800; color: var(--accent); }
+  .metric .lbl { font-size: 13px; color: var(--text-dim); margin-top: 4px; }
+
+  /* ---------- sections ---------- */
+  section { padding: 56px 0; scroll-margin-top: 70px; }
+  section + section { border-top: 1px solid var(--border); }
+  section h2 { font-size: 30px; font-weight: 800; letter-spacing: -0.3px; margin-bottom: 8px; }
+  section .sub { color: var(--text-dim); font-size: 16px; margin-bottom: 28px; }
+  .muted { color: var(--text-dim); }
+
+  /* comparison / what you get */
+  table.compare { width: 100%; border-collapse: collapse; margin: 8px 0 24px; }
+  .compare th, .compare td {
+    text-align: left; padding: 12px 16px; border: 1px solid var(--border);
+    font-size: 15px; vertical-align: top;
+  }
+  .compare th { background: var(--bg-soft); color: var(--text); font-weight: 700; }
+  .compare td:first-child { background: var(--bg-soft); color: var(--text-dim); width: 42%; }
+  .compare .bad { color: var(--red); }
+  .compare .good { color: var(--green); font-weight: 600; }
+
+  /* steps */
+  .steps { display: flex; flex-direction: column; gap: 14px; margin: 12px 0 8px; }
+  .step {
+    display: flex; gap: 18px; background: var(--card); border: 1px solid var(--border);
+    border-radius: var(--radius); padding: 20px;
+  }
+  .step .n {
+    flex: 0 0 auto; width: 34px; height: 34px; border-radius: 50%;
+    background: var(--accent-soft); color: var(--accent);
+    display: flex; align-items: center; justify-content: center;
+    font-weight: 800; font-size: 17px;
+  }
+  .step .t { font-weight: 700; margin-bottom: 4px; }
+  .step .d { color: var(--text-dim); font-size: 15px; }
+
+  /* code */
+  pre {
+    background: #010409; border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; overflow-x: auto; font-size: 14px; line-height: 1.6;
+    font-family: "SF Mono", SFMono-Regular, "Cascadia Code", Consolas, monospace;
+    margin: 14px 0;
+  }
+  pre .cmt { color: #8b949e; }
+
+  /* notes */
+  .note {
+    border-left: 3px solid var(--accent); background: var(--bg-soft);
+    border-radius: 0 var(--radius) var(--radius) 0; padding: 14px 18px;
+    margin: 16px 0; font-size: 15px;
+  }
+  .note.warn { border-left-color: var(--yellow); background: var(--yellow-soft); }
+  .note.danger { border-left-color: var(--red); background: var(--red-soft); }
+  .note.ok { border-left-color: var(--green); background: var(--green-soft); }
+  .note b.t { display: block; font-size: 14px; margin-bottom: 4px; letter-spacing: 0.3px; }
+
+  /* faq */
+  .faq .q {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    margin-bottom: 10px; overflow: hidden;
+  }
+  .faq .q summary {
+    cursor: pointer; padding: 16px 20px; font-weight: 600; font-size: 15px;
+    list-style: none; display: flex; justify-content: space-between; align-items: center; gap: 12px;
+  }
+  .faq .q summary::-webkit-details-marker { display: none; }
+  .faq .q summary .chev { transition: transform 0.15s; color: var(--text-dim); font-size: 14px; }
+  .faq .q[open] summary .chev { transform: rotate(90deg); }
+  .faq .q .a { padding: 0 20px 16px; color: var(--text-dim); font-size: 15px; }
+
+  /* example requests */
+  .tiles { display: grid; grid-template-columns: repeat(auto-fit, minmax(250px, 1fr)); gap: 14px; }
+  .tile {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 16px 18px; font-size: 15px;
+    border-top: 3px solid var(--accent);
+  }
+
+  /* flow diagram (pure CSS, no images) */
+  .flow { display: flex; flex-direction: column; align-items: stretch; gap: 8px; margin: 16px 0; }
+  .flow .node {
+    background: var(--card); border: 1px solid var(--border); border-radius: var(--radius);
+    padding: 14px 18px; text-align: center; font-size: 15px;
+  }
+  .flow .node b { color: var(--accent); }
+  .flow .arrow { text-align: center; color: var(--text-dim); font-size: 18px; line-height: 1; }
+
+  footer {
+    border-top: 1px solid var(--border); padding: 40px 0 56px; text-align: center; color: var(--text-dim); font-size: 14px;
+  }
+  footer .repo { color: var(--accent); text-decoration: none; font-weight: 600; }
+  footer .repo:hover { text-decoration: underline; }
+
+  @media (max-width: 640px) {
+    .hero h1 { font-size: 32px; }
+    .nav-links { display: none; }
+    .step { flex-direction: column; gap: 10px; }
+  }
+</style>
+</head>
+<body>
+
+<nav>
+  <div class="inner">
+    <div class="brand"><span class="dot"></span> Заводилка когорт by OMS</div>
+    <div class="nav-links">
+      <a href="#how">Как работает</a>
+      <a href="#setup">Установка</a>
+      <a href="#usage">Использование</a>
+      <a href="#examples">Примеры</a>
+      <a href="#faq">FAQ</a>
+    </div>
+  </div>
+</nav>
+
+<div class="wrap">
+
+  <!-- HERO -->
+  <header class="hero">
+    <span class="kicker">Инструмент для ОМС · экономит ~40 минут на 25 когорт</span>
+    <h1>Заводи когорты <span class="grad">за тебя.</span></h1>
+    <p>
+      Ты говоришь нейросети слаг и диапазон — она сама забирает даты из таблицы запусков,
+      читает настройки из когорты-эталона, заполняет формы в админке и сохраняет.
+      Вход в админку — только твоими руками, кураторов автоматика никогда не трогает.
+    </p>
+    <div class="cta">
+      <a class="btn btn-primary" href="https://github.com/nickvdonsk-art/praktikum-cohort-factory">Открыть репозиторий →</a>
+      <a class="btn btn-ghost" href="#usage">Как пользоваться</a>
+    </div>
+    <div class="metrics">
+      <div class="metric"><div class="num">~40 мин</div><div class="lbl">экономия на 25 когорт</div></div>
+      <div class="metric"><div class="num">0</div><div class="lbl">скриншотов эталона</div></div>
+      <div class="metric"><div class="num">0</div><div class="lbl">паролей видит бот</div></div>
+      <div class="metric"><div class="num">3</div><div class="lbl">вопроса от нейросети</div></div>
+    </div>
+  </header>
+
+  <!-- HOW -->
+  <section id="how">
+    <h2>Как это работает</h2>
+    <p class="sub">Схема простая: ты задаёшь параметры — остальное делает нейросеть.</p>
+
+    <div class="flow">
+      <div class="node">Ты говоришь: <b>слаг</b> (курс) и <b>диапазон номеров</b></div>
+      <div class="arrow">↓</div>
+      <div class="node">Нейросеть собирает контекст: <b>даты из таблицы</b> + <b>эталон из админки</b></div>
+      <div class="arrow">↓</div>
+      <div class="node">Ты <b>сам логинишься</b> в админку в открытом окне</div>
+      <div class="arrow">↓</div>
+      <div class="node">Нейросеть заполняет и сохраняет <b>когорту за когортой</b> (кураторов не трогает)</div>
+      <div class="arrow">↓</div>
+      <div class="node">Ты <b>проверяешь глазами</b> пару созданных когорт</div>
+    </div>
+
+    <table class="compare">
+      <tr><th>Было вручную</th><th>Стало с заводилкой</th></tr>
+      <tr><td class="bad">25 когорт ≈ 40 минут кликов</td><td class="good">несколько минут диалога</td></tr>
+      <tr><td class="bad">Вставлять скриншоты эталона</td><td class="good">настройки читаются из админки сами</td></tr>
+      <tr><td class="bad">Искать даты по таблице</td><td class="good">даты подставляются автоматически</td></tr>
+      <tr><td class="bad">Риск перепутать поле</td><td class="good">сервис сверяет имя и номер с диапазоном</td></tr>
+    </table>
+  </section>
+
+  <!-- SETUP -->
+  <section id="setup">
+    <h2>Установка</h2>
+    <p class="sub">Один раз, ~5 минут. Нужен только <b>Python 3.10+</b>.</p>
+
+    <pre><span class="cmt"># 1. Склонировать проект</span>
+git clone https://github.com/nickvdonsk-art/praktikum-cohort-factory &amp;&amp; cd praktikum-cohort-factory
+
+<span class="cmt"># 2. Виртуальное окружение</span>
+python3 -m venv .venv &amp;&amp; source .venv/bin/activate   <span class="cmt"># Windows: .venv\Scripts\activate</span>
+
+<span class="cmt"># 3. Зависимости</span>
+pip install -r requirements.txt
+
+<span class="cmt"># 4. Браузер для автоматизации</span>
+playwright install chromium</pre>
+
+    <p>Проверка, что всё готово:</p>
+    <pre>python3 automation/driver.py --selftest</pre>
+
+    <div class="note ok">
+      <b class="t">✅ Всё работает</b>
+      Ты открываешь папку проекта в Claude Code (команда <code>claude</code> в этой папке)
+      и просто говоришь, что нужно сделать. Дальше нейросеть ведёт диалог.
+    </div>
+  </section>
+
+  <!-- USAGE -->
+  <section id="usage">
+    <h2>Первый запуск</h2>
+    <p class="sub">Три шага, в которых нужно только ты — остальное нейросеть делает сама.</p>
+
+    <div class="steps">
+      <div class="step">
+        <div class="n">1</div>
+        <div>
+          <div class="t">Открываешь проект в нейросети</div>
+          <div class="d">В папке проекта запускаешь Claude Code и говоришь: «Хочу завести когорты».</div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">2</div>
+        <div>
+          <div class="t">Отвечаешь на вопросы и прикладываешь файл с датами</div>
+          <div class="d">
+            Нейросеть спросит: <b>слаг</b> (например <code>math-for-da-ds</code>),
+            <b>диапазон номеров</b> (например <code>201–226</code>) и
+            <b>какую когорту взять эталоном</b>. Ещё попросит
+            <b>скриншот или Excel-файл таблицы «График запусков по бизнес группам»</b>
+            (она приватна и по ссылке не открывается) — из него нейросеть заберёт даты.
+          </div>
+        </div>
+      </div>
+      <div class="step">
+        <div class="n">3</div>
+        <div>
+          <div class="t">Входишь в админку и подтверждаешь</div>
+          <div class="d">
+            Откроется окно браузера со страницей факультетов — ты логинишься своими
+            руками. Подтверждаешь вход, дальше нейросеть создаёт когорты
+            и в конце показывает список — ты проверяешь пару штук глазами.
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <div class="note warning">
+      <b class="t">⚠ Кураторы — всегда руками человека</b>
+      Поле «Кураторы» при создании когорт автоматика <b>никогда</b> не заполняет
+      (сервис гарантирует это сам, даже если в эталоне кто-то его заполнил).
+      Куратора назначает человек после создания когорты. Это требование ОМС.
+    </div>
+  </section>
+
+  <!-- EXAMPLES -->
+  <section id="examples">
+    <h2>Примеры запросов</h2>
+    <p class="sub">Просто скажи нейросети, что нужно:</p>
+    <div class="tiles">
+      <div class="tile">«Заведи когорты 201–226 на math-for-da-ds по графику запусков»</div>
+      <div class="tile">«Создай когорты на python-basics, эталон — как у последней когорты»</div>
+      <div class="tile">«Проверь, не отложенные ли даты старта у следующих трёх когорт на data-analyst»</div>
+    </div>
+  </section>
+
+  <!-- FAQ -->
+  <section id="faq">
+    <h2>Частые вопросы</h2>
+    <p class="sub">Что делать, если что-то пошло не так.</p>
+
+    <div class="faq">
+      <details class="q">
+        <summary>Нейросеть просит логин и пароль от админки — это нормально?<span class="chev">›</span></summary>
+        <div class="a">Нет. Вход всегда делаешь только ты, своими руками, в отдельном окне браузера. Если ассистент просит пароль — останови его и скажи: «Вход делаю сам».</div>
+      </details>
+      <details class="q">
+        <summary>«Кнопка Сохранить заблокирована» — что это значит?<span class="chev">›</span></summary>
+        <div class="a">Когорта не прошла валидацию (например, не заполнен тип когорты). Нейросеть остановится и покажет скриншот — дозаполни пропущенное поле и продолжи.</div>
+      </details>
+      <details class="q">
+        <summary>«Форма подставила другой номер» — что делать?<span class="chev">›</span></summary>
+        <div class="a">Сервис намеренно не перезаписывает номер вслепую: он покажет, что видит в форме, и спросит тебя. Сверься с диапазоном и на всякий случай проверь, нет ли уже такой когорты.</div>
+      </details>
+      <details class="q">
+        <summary>Могу ли я заводить когорты без нейросети?<span class="chev">›</span></summary>
+        <div class="a">Да, есть ручной режим через Swagger-интерфейс (описан в <code>docs/РУЧНОЙ-РЕЖИМ.md</code> репозитория). Но удобнее и быстрее — через нейросеть.</div>
+      </details>
+      <details class="q">
+        <summary>Это безопасно для чувствительных данных?<span class="chev">›</span></summary>
+        <div class="a">Да. Все локальные данные (скриншоты, загруженные таблицы, даты) лежат только у тебя на компьютере и не попадают в git. В репозиторий уходит только код. Пароли в админку вводишь только ты.</div>
+      </details>
+    </div>
+  </section>
+
+  <!-- footer -->
+  <footer>
+    <p>Заводилка когорт by OMS · открытый код — <a class="repo" href="https://github.com/nickvdonsk-art/praktikum-cohort-factory">github.com/nickvdonsk-art/praktikum-cohort-factory</a></p>
+    <p style="margin-top:6px">Если что-то непонятно — напиши в комментарии под страницей, инструкцию дополним.</p>
+  </footer>
+
+</div>
+
+</body>
+</html>

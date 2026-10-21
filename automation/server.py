@@ -90,7 +90,7 @@ def _loc(page: Page, name_or_selector: str):
 
 
 # --- низкоуровневые помощники ---------------------------------------------------
-def _page() -> Page:
+def _active_page() -> Page:
     if _page is None:
         raise HTTPException(503, "Браузер не открыт. Вызови /api/open.")
     return _page
@@ -106,26 +106,25 @@ def _wait(page: Page, selector: str, timeout_ms: int) -> None:
 def _visible_text(page: Page) -> str:
     """Текстовый 'снимок' страницы для навигации ассистента."""
     chunks: list[str] = []
-    for el in page.locator("h1, h2, h3, .modal-title, .card-header, button, "
-                           "label, input[type=text], input[type=number], "
-                           "input[type=date], input[type=checkbox]"):
-        n = el.count()
-        while n:
-            n -= 1
-            e = el.nth(n)
-            tag = e.evaluate("el => el.tagName.toLowerCase()")
-            if tag == "input":
-                v = e.input_value()
-                checked = e.is_checked() if e.get_attribute("type") == "checkbox" else None
-                tid = e.get_attribute("data-test-id") or ""
-                out = f"input[{tid or e.get_attribute('id') or ''}]={v!r}"
-                if checked is not None:
-                    out += f" checked={checked}"
-                chunks.append(out)
-            else:
-                txt = e.inner_text().strip()
-                if txt:
-                    chunks.append(f"<{tag}> {txt}")
+    loc = page.locator("h1, h2, h3, .modal-title, .card-header, button, "
+                       "label, input[type=text], input[type=number], "
+                       "input[type=date], input[type=checkbox]")
+    n = loc.count()
+    for i in range(n):
+        e = loc.nth(i)
+        tag = e.evaluate("el => el.tagName.toLowerCase()")
+        if tag == "input":
+            v = e.input_value()
+            checked = e.is_checked() if e.get_attribute("type") == "checkbox" else None
+            tid = e.get_attribute("data-test-id") or ""
+            out = f"input[{tid or e.get_attribute('id') or ''}]={v!r}"
+            if checked is not None:
+                out += f" checked={checked}"
+            chunks.append(out)
+        else:
+            txt = e.inner_text().strip()
+            if txt:
+                chunks.append(f"<{tag}> {txt}")
     return "\n".join(chunks)
 
 
@@ -216,6 +215,7 @@ def _cohort_number(page: Page) -> int | None:
 
 @app.get("/api/status")
 def status():
+    global _page
     return {
         "alive": True,
         "browser_open": _page is not None,
@@ -239,14 +239,14 @@ def open_browser(req: OpenRequest):
 
 @app.get("/api/snapshot")
 def snapshot():
-    page = _page()
+    page = _active_page()
     page.wait_for_timeout(600)
     return {"url": page.url, "text": _visible_text(page)}
 
 
 @app.post("/api/click")
 def click(req: ClickRequest):
-    page = _page()
+    page = _active_page()
     _wait(page, req.selector, req.timeout_ms)
     page.locator(req.selector).first.click()
     return {"ok": True}
@@ -254,7 +254,7 @@ def click(req: ClickRequest):
 
 @app.post("/api/type")
 def type_text(req: TypeRequest):
-    page = _page()
+    page = _active_page()
     _wait(page, req.selector, 10000)
     loc = page.locator(req.selector).first
     loc.fill("")
@@ -264,14 +264,14 @@ def type_text(req: TypeRequest):
 
 @app.post("/api/select")
 def select(req: SelectRequest):
-    page = _page()
+    page = _active_page()
     _dropdown_select(page, req.selector, req.option)
     return {"ok": True}
 
 
 @app.post("/api/tick")
 def tick(req: TickRequest):
-    page = _page()
+    page = _active_page()
     _wait(page, req.selector, 10000)
     loc = page.locator(req.selector).first
     if req.checked is None:
@@ -284,7 +284,7 @@ def tick(req: TickRequest):
 @app.post("/api/search_slug")
 def search_slug(body: dict):
     """Ввести слаг в поиск факультетов и нажать «Добавить когорту»."""
-    page = _page()
+    page = _active_page()
     slug = body.get("slug", "")
     if not slug:
         raise HTTPException(422, "Нужен slug")
@@ -294,7 +294,7 @@ def search_slug(body: dict):
 
 @app.post("/api/open_cohort_form")
 def open_cohort_form(body: dict):
-    page = _page()
+    page = _active_page()
     if body.get("slug"):
         _open_cohort_form(page, body["slug"])
     else:
@@ -305,7 +305,7 @@ def open_cohort_form(body: dict):
 @app.get("/api/current_form")
 def current_form():
     """Прочитать заполненные поля открытой формы (после логина) — эталон на лету."""
-    page = _page()
+    page = _active_page()
     return {"fields": _read_current_form(page)}
 
 
@@ -313,7 +313,7 @@ def current_form():
 def set_template_from_form(body: dict):
     """Взять значения открытой формы и записать в config/template.json.
     Кураторы всегда пустые (их заполняет человек при создании)."""
-    page = _page()
+    page = _active_page()
     fields = _read_current_form(page)
     fields.pop("curators_ids", None)  # пользователь: всегда пусто
     merge = bool(body.get("merge", True))
@@ -334,7 +334,7 @@ def set_template_from_form(body: dict):
 @app.post("/api/create_cohort")
 def create_cohort(req: CreateRequest):
     """Полный сценарий на одну когорту: форма → заполнение → Сохранить."""
-    page = _page()
+    page = _active_page()
     num = req.cohort_number
     date_begin = req.date_begin
 
@@ -401,7 +401,7 @@ def create_cohort(req: CreateRequest):
 
 @app.post("/api/screenshot")
 def screenshot():
-    page = _page()
+    page = _active_page()
     path = Path(tempfile.gettempdir()) / f"cohort_screen_{os.getpid()}.png"
     page.screenshot(path=str(path), full_page=False)
     return {"path": str(path)}
