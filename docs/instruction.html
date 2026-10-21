@@ -33,7 +33,7 @@
     <div>
       <h1>Когорты без рутины.<br><span class="cg-gradient">Больше времени на важное.</span></h1>
       <p class="cg-lead">Отправь один запрос — нейросеть спросит всё недостающее одним сообщением, сама найдёт даты в твоём графике запусков, возьмёт настройки из когорты-эталона и пачкой заведёт когорты в админке. От тебя — вход в браузер и финальная проверка.</p>
-      <div class="cg-actions"><a class="cg-btn cg-primary" href="https://github.com/nickvdonsk-art/praktikum-cohort-factory" target="_blank" rel="noopener">Открыть репозиторий <span>↗</span></a><a class="cg-btn cg-secondary" href="#cg-start">Начать работу ↓</a></div>
+      <div class="cg-actions"><a class="cg-btn cg-primary" href="https://drive.google.com/file/d/1ylTaNpJUmbTe27-G7SwyfAIph9ySfs-1/view?usp=sharing" target="_blank" rel="noopener">Скачать скилл для Claude Code <span>↗</span></a><a class="cg-btn cg-secondary" href="#cg-start">Начать работу ↓</a></div>
     </div>
     <div class="cg-art" aria-label="Иллюстрация автоматизации создания когорт">
       <div class="cg-window">
@@ -75,7 +75,9 @@
 <section class="cg-section cg-tint" id="cg-setup">
   <div class="cg-overline">02 · Подготовка</div>
   <h2>Установка за несколько минут</h2>
-  <p class="cg-sub">Нужен Python 3.10+ и терминал. Выполни команды по порядку в той папке, где хочешь хранить проект.</p>
+  <p class="cg-sub">Два пути на выбор: быстрый — через скилл для Claude Code (он сам склонирует и настроит проект), или классический — руками через терминал (нужны Python 3.10+ и терминал).</p>
+  <div class="cg-note safe" id="cg-skill"><strong>Вариант А · Скилл practicum-cohort-factory (рекомендую)</strong>Скачай файл скилла: <a href="https://drive.google.com/file/d/1ylTaNpJUmbTe27-G7SwyfAIph9ySfs-1/view?usp=sharing" target="_blank" rel="noopener">praktikum-cohort-factory.skill с Google&nbsp;Диска ↗</a>. Установи его в Claude Code — и всё: при первом запросе («заведи когорты…») скилл сам склонирует репозиторий, создаст окружение, поставит зависимости и запустит сервис. Ничего руками делать не нужно, вариант Б ниже можно пропустить.</div>
+  <div class="cg-overline" style="margin-top:26px">Вариант Б · Ручная установка</div>
   <div class="cg-codewrap"><div class="cg-code-label">Шаг 1 · Склонировать проект</div><pre>git clone https://github.com/nickvdonsk-art/praktikum-cohort-factory
 cd praktikum-cohort-factory</pre></div>
   <div class="cg-codewrap"><div class="cg-code-label">Шаг 2 · Создать виртуальное окружение</div><pre>python3 -m venv .venv
@@ -129,6 +131,7 @@ playwright install chromium</pre></div>
   <h2>Частые вопросы</h2>
   <p class="cg-sub">Короткие ответы на ситуации, которые могут возникнуть в процессе.</p>
   <div class="cg-faq">
+    <details><summary>Что даёт скилл practicum-cohort-factory и как его поставить?</summary><div class="cg-answer">Скилл — самый быстрый способ начать: он сам клонирует репозиторий, создаёт окружение, ставит зависимости и запускает сервис при первом запросе. Скачай файл <code class="cg-inlinecode">praktikum-cohort-factory.skill</code> <a href="https://drive.google.com/file/d/1ylTaNpJUmbTe27-G7SwyfAIph9ySfs-1/view?usp=sharing" target="_blank" rel="noopener">с Google&nbsp;Диска ↗</a> и установи его в Claude Code — дальше просто напиши «заведи когорты…».</div></details>
     <details><summary>Нейросеть просит логин и пароль от админки. Это нормально?</summary><div class="cg-answer">Нет. Вход всегда выполняешь только ты, своими руками, в отдельном окне браузера. Если ассистент просит пароль — останови его: это нарушение правил проекта.</div></details>
     <details><summary>Почему после логина ничего не спрашивают и сразу что-то происходит?</summary><div class="cg-answer">Так и задумано: процесс сам видит, что ты вошёл, и сразу продолжает — без вопросов «напишите, что вошли». Так быстрее.</div></details>
     <details><summary>Кнопка «Сохранить» заблокирована / форма подставила другой номер. Что происходит?</summary><div class="cg-answer">Автоматизация не «проталкивает» сохранение вслепую: она остановится и покажет скриншот (например, <code class="cg-inlinecode">input/save_blocked.png</code>). Проверь обязательные поля. Подставленный номер тоже сверяется с диапазоном — при несовпадении остановка, а не перезапись.</div></details>
@@ -141,6 +144,6 @@ playwright install chromium</pre></div>
 <footer class="cg-footer">
   <div><b>Заводилка когорт · OMS</b><br><small>Инструкция для коллег</small></div>
   <a href="https://github.com/nickvdonsk-art/praktikum-cohort-factory" target="_blank" rel="noopener">Репозиторий на GitHub ↗</a>
-  <small>Если что-то непонятно — оставь комментарий под страницей, инструкцию можно дополнить.</small>
+  <small>По любым вопросам обращайтесь к владельцу инструмента — Дубинину Николаю (<a href="mailto:nickdubinin@yandex-team.ru">nickdubinin@yandex-team.ru</a>) в Телемосте.</small>
 </footer>
 </div>
