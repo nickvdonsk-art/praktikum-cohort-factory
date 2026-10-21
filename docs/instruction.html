@@ -1,0 +1,146 @@
+<div class="cohort-guide">
+<style>
+.cohort-guide{--ink:#20243a;--muted:#697087;--line:#e8e9f2;--purple:#6558e8;--purple2:#8b7cff;--mint:#dff8ed;--paper:#fff;--wash:#f7f7fc;color:var(--ink);font:16px/1.65 Inter,-apple-system,BlinkMacSystemFont,"Segoe UI",Arial,sans-serif;background:#fff;width:100%;max-width:none;min-width:0;margin:0;overflow:hidden;border-radius:clamp(0px,1.8vw,24px)}
+.cohort-guide *{box-sizing:border-box;min-width:0}.cohort-guide a{color:inherit}.cohort-guide img,.cohort-guide svg,.cohort-guide video{max-width:100%;height:auto}.cohort-guide pre{max-width:100%}.cg-nav{display:flex;align-items:center;justify-content:space-between;gap:20px;padding:22px clamp(20px,5vw,64px);border-bottom:1px solid var(--line);background:rgba(255,255,255,.92)}
+.cg-brand{display:flex;align-items:center;gap:11px;font-weight:800;letter-spacing:-.3px}.cg-mark{display:grid;place-items:center;width:38px;height:38px;border-radius:13px;background:linear-gradient(135deg,var(--purple),#a69cff);color:#fff;font-size:19px;box-shadow:0 7px 18px #6558e833}.cg-navlinks{display:flex;gap:22px;flex-wrap:wrap}.cg-navlinks a{text-decoration:none;color:var(--muted);font-size:13px;font-weight:650}.cg-navlinks a:hover{color:var(--purple)}
+.cg-hero{position:relative;padding:clamp(48px,8vw,94px) clamp(20px,7vw,86px) 58px;background:radial-gradient(ellipse at 82% 15%,#e9e6ff 0,transparent 33%),radial-gradient(ellipse at 8% 80%,#e4fbf1 0,transparent 32%),#fbfbff}
+.cg-eyebrow{display:inline-flex;align-items:center;gap:8px;border:1px solid #e2defe;background:#fff;border-radius:999px;padding:7px 13px;color:#5f53d9;font-size:12px;font-weight:750;letter-spacing:.04em}.cg-eyebrow:before{content:"";width:7px;height:7px;border-radius:50%;background:#39b987}
+.cg-hero-grid{display:grid;grid-template-columns:1.1fr .9fr;align-items:center;gap:44px;margin-top:24px}.cg-hero h1{font-size:clamp(38px,5.3vw,68px)!important;line-height:1.08!important;letter-spacing:-.055em;margin:0 0 22px;font-weight:850!important;overflow-wrap:normal;word-break:normal}.cg-hero h1 .cg-gradient{display:block!important;font-size:inherit!important;line-height:1.08!important;font-weight:850!important;letter-spacing:inherit!important;color:var(--purple)!important;white-space:normal!important;max-width:100%}.cg-lead{font-size:clamp(16px,1.6vw,19px);color:var(--muted);max-width:610px;margin:0 0 28px}.cg-actions{display:flex;gap:12px;flex-wrap:wrap}.cg-btn{display:inline-flex;align-items:center;justify-content:center;gap:9px;padding:13px 19px;border-radius:13px;text-decoration:none!important;font-size:14px;font-weight:750;transition:transform .18s,box-shadow .18s}.cg-btn:hover{transform:translateY(-2px)}.cg-primary{background:var(--purple);color:#fff!important;box-shadow:0 9px 22px #6558e833}.cg-secondary{background:#fff;border:1px solid var(--line);color:var(--ink)!important}
+.cg-art{position:relative;min-height:300px;display:grid;place-items:center}.cg-window{width:min(100%,390px);background:#fff;border:1px solid #e9e7f6;border-radius:23px;padding:18px;box-shadow:0 24px 65px #35316c18;transform:rotate(2deg)}.cg-windowtop{display:flex;gap:6px;padding-bottom:17px;border-bottom:1px solid #f0eff7}.cg-windowtop i{width:8px;height:8px;border-radius:50%;background:#dedcf0}.cg-windowtitle{font-weight:800;font-size:13px;margin:18px 0 12px}.cg-task{display:flex;align-items:center;gap:11px;padding:12px;margin:8px 0;border:1px solid #eeedf7;border-radius:13px;font-size:12px;color:#565b73}.cg-task b{display:block;color:var(--ink);font-size:12px}.cg-check{display:grid;place-items:center;flex:0 0 28px;height:28px;border-radius:9px;background:#e5f9ef;color:#159665;font-weight:900}.cg-progress{height:7px;background:#f0eff9;border-radius:99px;margin-top:16px;overflow:hidden}.cg-progress span{display:block;width:78%;height:100%;background:linear-gradient(90deg,var(--purple),#9d91ff);border-radius:99px}.cg-float{position:absolute;right:-4px;bottom:10px;background:#fff;border:1px solid #eae8f7;border-radius:15px;padding:12px 15px;box-shadow:0 12px 30px #35316c18;font-size:12px;font-weight:750}.cg-float span{color:#19986a}
+.cg-stats{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin-top:42px}.cg-stat{padding:17px 18px;background:#ffffffc9;border:1px solid #ecebf7;border-radius:16px}.cg-stat strong{display:block;font-size:25px;letter-spacing:-.04em;color:var(--purple);line-height:1.2}.cg-stat span{display:block;font-size:12px;color:var(--muted);margin-top:7px}
+.cg-section{padding:clamp(42px,6vw,76px) clamp(20px,7vw,86px);scroll-margin-top:20px}.cg-section.cg-tint{background:var(--wash)}.cg-overline{font-size:11px;font-weight:850;letter-spacing:.12em;text-transform:uppercase;color:var(--purple);margin-bottom:9px}.cg-section h2{font-size:clamp(27px,3.2vw,40px);line-height:1.15;letter-spacing:-.04em;margin:0 0 12px}.cg-sub{color:var(--muted);margin:0 0 29px;max-width:720px}
+.cg-flow{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin:26px 0 34px}.cg-flowitem{position:relative;padding:18px 14px;background:#fff;border:1px solid var(--line);border-radius:16px;min-width:0}.cg-flowitem:not(:last-child):after{content:"→";position:absolute;right:-12px;top:24px;z-index:1;color:var(--purple);font-weight:900;background:var(--wash);border-radius:50%;width:22px;text-align:center}.cg-flowitem em{font-style:normal;display:grid;place-items:center;width:31px;height:31px;background:#eeecff;color:var(--purple);border-radius:10px;font-size:12px;font-weight:850;margin-bottom:14px}.cg-flowitem b{display:block;font-size:13px;line-height:1.4;margin-bottom:6px}.cg-flowitem span{display:block;font-size:12px;color:var(--muted);line-height:1.5}
+.cg-compare{display:grid;grid-template-columns:1fr 1fr;gap:14px}.cg-comparebox{border-radius:18px;padding:22px;border:1px solid var(--line);background:#fff}.cg-comparebox.good{background:#f0fcf6;border-color:#d5f3e4}.cg-comparebox h3{font-size:15px;margin:0 0 13px}.cg-comparebox ul{list-style:none;padding:0;margin:0}.cg-comparebox li{padding:7px 0;font-size:13px;color:var(--muted);display:flex;gap:9px}.cg-comparebox li:before{content:"−";color:#e16a72;font-weight:900}.cg-comparebox.good li:before{content:"✓";color:#159665}
+.cg-cards{display:grid;grid-template-columns:repeat(3,1fr);gap:14px}.cg-card{padding:22px;border:1px solid var(--line);border-radius:18px;background:#fff}.cg-card .cg-icon{display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:#efedff;color:var(--purple);font-size:19px;margin-bottom:17px}.cg-card h3{font-size:16px;margin:0 0 8px}.cg-card p{font-size:13px;color:var(--muted);margin:0}
+.cg-codewrap{position:relative;background:#20243a;color:#f5f4ff;border-radius:18px;padding:22px 24px;margin:14px 0;overflow:hidden}.cg-codewrap pre{white-space:pre;overflow-x:auto;font:12px/1.8 ui-monospace,SFMono-Regular,Consolas,monospace;margin:0;color:#f2f0ff}.cg-codewrap .cg-comment{color:#a5a8c6}.cg-code-label{font-size:10px;letter-spacing:.12em;text-transform:uppercase;color:#b5b1ff;font-weight:800;margin-bottom:12px}.cg-inlinecode{font: .92em ui-monospace,SFMono-Regular,Consolas,monospace;background:#f0efff;color:#5146bf;border-radius:6px;padding:2px 6px;overflow-wrap:anywhere}
+.cg-note{padding:17px 19px;border-radius:14px;background:#f0efff;border:1px solid #e1ddff;margin:18px 0;font-size:13px;color:#514c79}.cg-note strong{display:block;color:#4d43ba;margin-bottom:4px}.cg-note.warn{background:#fff8e9;border-color:#f5e4b9;color:#795c22}.cg-note.warn strong{color:#a36b0b}.cg-note.safe{background:#effbf5;border-color:#d5f3e4;color:#28684f}.cg-note.safe strong{color:#16815a}
+.cg-steps{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;counter-reset:steps}.cg-step{counter-increment:steps;background:#fff;border:1px solid var(--line);border-radius:18px;padding:23px}.cg-step:before{content:"0" counter(steps);display:grid;place-items:center;width:42px;height:42px;border-radius:13px;background:var(--purple);color:#fff;font-weight:850;font-size:13px;margin-bottom:18px}.cg-step h3{font-size:16px;margin:0 0 8px}.cg-step p{font-size:13px;color:var(--muted);margin:0}
+.cg-examples{display:grid;grid-template-columns:repeat(3,1fr);gap:12px}.cg-example{background:#fff;border:1px solid var(--line);border-radius:16px;padding:20px;font-size:13px;font-weight:650;position:relative}.cg-example:before{content:"“";display:block;font-size:35px;color:#b5afff;line-height:1;margin-bottom:9px}
+.cg-faq{max-width:850px}.cg-faq details{border-bottom:1px solid var(--line)}.cg-faq details:first-child{border-top:1px solid var(--line)}.cg-faq summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;gap:20px;padding:19px 3px;font-weight:750;font-size:14px}.cg-faq summary::-webkit-details-marker{display:none}.cg-faq summary:after{content:"+";color:var(--purple);font-size:23px;font-weight:400;flex:0 0 auto}.cg-faq details[open] summary:after{content:"−"}.cg-answer{padding:0 30px 19px 3px;color:var(--muted);font-size:13px}.cg-footer{padding:30px clamp(20px,7vw,86px);background:#20243a;color:#d6d8e8;display:flex;align-items:center;justify-content:space-between;gap:18px;flex-wrap:wrap;font-size:12px}.cg-footer a{color:#bcb5ff;text-decoration:none;font-weight:750}.cg-footer small{color:#a6abc3}
+@media(max-width:850px){.cg-hero-grid{grid-template-columns:1fr;gap:20px}.cg-art{min-height:270px}.cg-flow{grid-template-columns:1fr;gap:9px}.cg-flowitem{display:grid;grid-template-columns:34px 1fr;column-gap:12px;align-items:center;padding:13px}.cg-flowitem em{grid-row:span 2;margin:0}.cg-flowitem b{margin:0}.cg-flowitem:not(:last-child):after{content:"↓";right:auto;left:23px;top:auto;bottom:-17px}.cg-cards,.cg-steps,.cg-examples{grid-template-columns:1fr 1fr}.cg-stats{grid-template-columns:1fr 1fr}}
+@media(max-width:560px){.cohort-guide{border-radius:0}.cg-nav{align-items:flex-start}.cg-navlinks{display:none}.cg-hero-grid{margin-top:22px}.cg-hero h1{font-size:clamp(34px,8vw,41px)!important}.cg-hero h1 .cg-gradient{font-size:inherit!important;line-height:1.08!important}.cg-art{min-height:245px}.cg-window{padding:14px}.cg-stats{gap:8px}.cg-stat{padding:13px}.cg-stat strong{font-size:21px}.cg-compare,.cg-cards,.cg-steps,.cg-examples{grid-template-columns:1fr}.cg-section{padding-top:42px;padding-bottom:42px}.cg-footer{align-items:flex-start;flex-direction:column}}
+@media(prefers-reduced-motion:reduce){.cohort-guide *{scroll-behavior:auto!important;transition:none!important}}
+</style>
+
+<nav class="cg-nav">
+  <div class="cg-brand"><span class="cg-mark">✳</span> Заводилка когорт <span style="color:#8a8da3;font-weight:600">/ OMS</span></div>
+  <div class="cg-navlinks"><a href="#cg-how">Как работает</a><a href="#cg-setup">Установка</a><a href="#cg-start">Первый запуск</a><a href="#cg-rules">Правила</a><a href="#cg-faq">FAQ</a></div>
+</nav>
+
+<header class="cg-hero">
+  <span class="cg-eyebrow">ИНСТРУМЕНТ ДЛЯ ОМС · ИНСТРУКЦИЯ</span>
+  <div class="cg-hero-grid">
+    <div>
+      <h1>Когорты без рутины.<br><span class="cg-gradient">Больше времени на важное.</span></h1>
+      <p class="cg-lead">Отправь один запрос — нейросеть спросит всё недостающее одним сообщением, сама найдёт даты в твоём графике запусков, возьмёт настройки из когорты-эталона и пачкой заведёт когорты в админке. От тебя — вход в браузер и финальная проверка.</p>
+      <div class="cg-actions"><a class="cg-btn cg-primary" href="https://github.com/nickvdonsk-art/praktikum-cohort-factory" target="_blank" rel="noopener">Открыть репозиторий <span>↗</span></a><a class="cg-btn cg-secondary" href="#cg-start">Начать работу ↓</a></div>
+    </div>
+    <div class="cg-art" aria-label="Иллюстрация автоматизации создания когорт">
+      <div class="cg-window">
+        <div class="cg-windowtop"><i></i><i></i><i></i></div>
+        <div class="cg-windowtitle">Создание когорт · процесс</div>
+        <div class="cg-task"><span class="cg-check">✓</span><div><b>Параметры получены</b>5 входных данных одним сообщением</div></div>
+        <div class="cg-task"><span class="cg-check">✓</span><div><b>Даты из графика найдены</b>CSV: старт, окончание, дедлайны</div></div>
+        <div class="cg-task"><span class="cg-check">✓</span><div><b>Когорты заведены пачкой</b>Осталось проверить результат</div></div>
+        <div class="cg-progress"><span></span></div>
+      </div>
+      <div class="cg-float">Статус: <span>● готово к проверке</span></div>
+    </div>
+  </div>
+  <div class="cg-stats">
+    <div class="cg-stat"><strong>~40 мин</strong><span>экономии на 25 когортах</span></div>
+    <div class="cg-stat"><strong>1</strong><span>сообщение с параметрами вместо десятка</span></div>
+    <div class="cg-stat"><strong>0</strong><span>паролей передаётся нейросети</span></div>
+    <div class="cg-stat"><strong>0</strong><span>промежуточных остановок на диапазоне</span></div>
+  </div>
+</header>
+
+<section class="cg-section" id="cg-how">
+  <div class="cg-overline">01 · Принцип работы</div>
+  <h2>От запроса до готовых когорт</h2>
+  <p class="cg-sub">Ты одним сообщением передаёшь параметры и входишь в админку сам. Рутину выполняет автоматизация — пачкой, без остановок и отчётов после каждой когорты. Итог остаётся под твоим контролем.</p>
+  <div class="cg-flow">
+    <div class="cg-flowitem"><em>01</em><b>Задаёшь параметры</b><span>5 входных данных (список — ниже)</span></div>
+    <div class="cg-flowitem"><em>02</em><b>Собирается контекст</b><span>Даты из твоего CSV + эталон из админки</span></div>
+    <div class="cg-flowitem"><em>03</em><b>Входишь в админку</b><span>Логинишься лично; процесс не ждёт «я вошёл»</span></div>
+    <div class="cg-flowitem"><em>04</em><b>Когорты создаются пачкой</b><span>Весь диапазон подряд, итог одним списком</span></div>
+    <div class="cg-flowitem"><em>05</em><b>Проверяешь итог</b><span>Глядишь пару когорт глазами в админке</span></div>
+  </div>
+  <div class="cg-compare">
+    <div class="cg-comparebox"><h3>Раньше · вручную</h3><ul><li>Клики по каждой форме</li><li>Поиск дат в таблице запусков</li><li>Перепроверка номера и полей</li><li>Риск ошибиться в дате или дедлайне</li></ul></div>
+    <div class="cg-comparebox good"><h3>Теперь · с заводилкой</h3><ul><li>Один запрос со всеми параметрами</li><li>Даты подставляются из графика запусков</li><li>Настройки читаются из когорты-эталона</li><li>Номер сверяется автоматически, дублей нет</li></ul></div>
+  </div>
+</section>
+
+<section class="cg-section cg-tint" id="cg-setup">
+  <div class="cg-overline">02 · Подготовка</div>
+  <h2>Установка за несколько минут</h2>
+  <p class="cg-sub">Нужен Python 3.10+ и терминал. Выполни команды по порядку в той папке, где хочешь хранить проект.</p>
+  <div class="cg-codewrap"><div class="cg-code-label">Шаг 1 · Склонировать проект</div><pre>git clone https://github.com/nickvdonsk-art/praktikum-cohort-factory
+cd praktikum-cohort-factory</pre></div>
+  <div class="cg-codewrap"><div class="cg-code-label">Шаг 2 · Создать виртуальное окружение</div><pre>python3 -m venv .venv
+source .venv/bin/activate</pre><p style="font-size:12px;color:#b8bad0;margin:10px 0 0">Windows: <code> .venv\Scripts\activate </code></p></div>
+  <div class="cg-codewrap"><div class="cg-code-label">Шаг 3 · Установить зависимости</div><pre>pip install -r requirements.txt
+playwright install chromium</pre></div>
+  <div class="cg-codewrap"><div class="cg-code-label">Шаг 4 · Запустить сервис</div><pre>bash automation/run.sh</pre><p style="font-size:12px;color:#b8bad0;margin:10px 0 0">Откроется окно браузера «инкогнито» с админкой — дальше работай через нейросеть.</p></div>
+</section>
+
+<section class="cg-section" id="cg-start">
+  <div class="cg-overline">03 · Первый запуск</div>
+  <h2>Что передать нейросети</h2>
+  <p class="cg-sub">Пришли один запрос — нейросеть задаст вопросы вариантами ответов (выбрать быстрее, чем печатать). Если чего-то не хватает — спросит всё сразу одним сообщением, а не по одному. Полный список входных данных:</p>
+  <div class="cg-cards">
+    <div class="cg-card"><div class="cg-icon">1</div><h3>Слаг курса</h3><p>Например <code class="cg-inlinecode">excel-for-work-full</code>. По нему ищутся когорты в графике и строятся имена вида <code class="cg-inlinecode">слаг_cohort_номер</code>.</p></div>
+    <div class="cg-card"><div class="cg-icon">2</div><h3>Прямая ссылка на когорты слага</h3><p>Открой факультет/профессию в админке и скопируй URL из адресной строки. Поиск по слагу не используется — он цепляет похожие факультеты (например <code class="cg-inlinecode">-extra</code>).</p></div>
+    <div class="cg-card"><div class="cg-icon">3</div><h3>Диапазон когорт</h3><p>С какой по какую создавать, например 1224–1247.</p></div>
+    <div class="cg-card"><div class="cg-icon">4</div><h3>Эталонная когорта</h3><p>Обычно последняя созданная (<code class="cg-inlinecode">слаг_cohort_1223</code>). Её настройки возьмутся как шаблон; кураторы — всегда пустыми.</p></div>
+    <div class="cg-card"><div class="cg-icon">5</div><h3>Файл «График запусков по бизнес-группам»</h3><p>Желательно CSV, можно Excel. Таблица приватная — по ссылке не откроется, приложи файлом в чат. Из него берутся старт, окончание и оба дедлайна.</p></div>
+    <div class="cg-card"><div class="cg-icon">✓</div><h3>Подтверждение дат</h3><p>Нейросеть покажет найденные даты кратко и спросит подтверждение — один раз, перед заведением.</p></div>
+  </div>
+  <div class="cg-note"><strong>Как проходит запуск</strong>После подтверждения дат откроется браузер с админкой — войди сам. Писать «я вошёл» не нужно: процесс сам видит вход и сразу заводит весь диапазон пачкой, без остановок и отчётов между когортами. В конце — один общий список созданных когорт.</div>
+  <div class="cg-note warn"><strong>Важно: кураторов назначает человек</strong>Поле «Кураторы» автоматизация никогда не заполняет — даже если в эталоне кураторы есть. Назначь их вручную после создания когорт. Это требование ОМС.</div>
+</section>
+
+<section class="cg-section cg-tint" id="cg-rules">
+  <div class="cg-overline">04 · Правила, зашитые в процесс</div>
+  <h2>Что заводилка делает всегда</h2>
+  <p class="cg-sub"> Эти правила не нужно каждый раз проговаривать — они зашиты в сервис и выполняются автоматически.</p>
+  <div class="cg-cards">
+    <div class="cg-card"><div class="cg-icon">Т</div><h3>Тип когорты — «Стандартная»</h3><p>Всегда, независимо от эталона. Только для фальш-когорт — другой тип (см. соседнюю карточку).</p></div>
+    <div class="cg-card"><div class="cg-icon">Ф</div><h3>Фальш-когорты по суффиксу merge</h3><p>Если в графике у когорты имя вида <code class="cg-inlinecode">слаг_cohort_33merge</code> — тип ставится «фальш-когорта», а имя создаётся с суффиксом merge.</p></div>
+    <div class="cg-card"><div class="cg-icon">д</div><h3>Даты сверяются с графиком</h3><p>Старт — всегда из графика; если автоподстановка окончания или дедлайнов не совпала или пустая — сервис впишет значение из таблицы вручную.</p></div>
+  </div>
+  <div class="cg-note safe"><strong>Безопасность</strong>Вход в админку — только твой, руками, в инкогнито-окне: нейросеть не просит и не видит пароли. Присланные файлы (график, вложения) хранятся локально на твоём компьютере и никогда не попадают в git. Если форма ведёт себя неожиданно (поле не нашлось, «Сохранить» заблокирован) — процесс сам остановится и покажет скриншот, а не будет проталкивать сохранение вслепую.</div>
+</section>
+
+<section class="cg-section" id="cg-examples">
+  <div class="cg-overline">05 · Примеры</div>
+  <h2>Что можно попросить</h2>
+  <p class="cg-sub">Формулируй задачу обычным языком; недостающие параметры нейросеть спросит одним сообщением с вариантами ответов.</p>
+  <div class="cg-examples">
+    <div class="cg-example">Заведи когорты 201–226 на math-for-da-ds по графику запусков (файл прикладываю).</div>
+    <div class="cg-example">Создай когорты на python-basics, эталон — как у последней когорты. Ссылка: …/squads/</div>
+    <div class="cg-example">Проверь, не отложенные ли даты старта у следующих трёх когорт на data-analyst.</div>
+  </div>
+</section>
+
+<section class="cg-section cg-tint" id="cg-faq">
+  <div class="cg-overline">06 · Поддержка</div>
+  <h2>Частые вопросы</h2>
+  <p class="cg-sub">Короткие ответы на ситуации, которые могут возникнуть в процессе.</p>
+  <div class="cg-faq">
+    <details><summary>Нейросеть просит логин и пароль от админки. Это нормально?</summary><div class="cg-answer">Нет. Вход всегда выполняешь только ты, своими руками, в отдельном окне браузера. Если ассистент просит пароль — останови его: это нарушение правил проекта.</div></details>
+    <details><summary>Почему после логина ничего не спрашивают и сразу что-то происходит?</summary><div class="cg-answer">Так и задумано: процесс сам видит, что ты вошёл, и сразу продолжает — без вопросов «напишите, что вошли». Так быстрее.</div></details>
+    <details><summary>Кнопка «Сохранить» заблокирована / форма подставила другой номер. Что происходит?</summary><div class="cg-answer">Автоматизация не «проталкивает» сохранение вслепую: она остановится и покажет скриншот (например, <code class="cg-inlinecode">input/save_blocked.png</code>). Проверь обязательные поля. Подставленный номер тоже сверяется с диапазоном — при несовпадении остановка, а не перезапись.</div></details>
+    <details><summary>Откуда берутся даты старта, окончания и дедлайны?</summary><div class="cg-answer">Только из присланного тобой файла «График запусков по бизнес-группам» (CSV или Excel), по точному номеру когорты. По ссылке таблица не открывается — она приватная, поэтому всегда прикладывай файл.</div></details>
+    <details><summary>Браузер часто «лагает» на странице когорт. Это лечится?</summary><div class="cg-answer">Страница профессии с полным списком когорт очень тяжёлая — это особенность админки, а не твоего ПК. Сервис запускается с оптимизациями и работает с длинными таймаутами; просто не закрывай окно, пока идёт заведение.</div></details>
+    <details><summary>Можно создавать когорты без нейросети?</summary><div class="cg-answer">Да. Доступен ручной режим через Swagger-интерфейс. Инструкция находится в репозитории: <code class="cg-inlinecode">docs/РУЧНОЙ-РЕЖИМ.md</code>.</div></details>
+  </div>
+</section>
+
+<footer class="cg-footer">
+  <div><b>Заводилка когорт · OMS</b><br><small>Инструкция для коллег</small></div>
+  <a href="https://github.com/nickvdonsk-art/praktikum-cohort-factory" target="_blank" rel="noopener">Репозиторий на GitHub ↗</a>
+  <small>Если что-то непонятно — оставь комментарий под страницей, инструкцию можно дополнить.</small>
+</footer>
+</div>
