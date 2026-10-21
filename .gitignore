@@ -1,0 +1,19 @@
+# Локальные данные — никогда в git
+input/
+config/dates.json
+config/input.json
+
+# Python
+.venv/
+__pycache__/
+*.pyc
+
+# Playwright
+playwright-report/
+test-results/
+
+# Энвайронмент и редакторы
+.env
+.DS_Store
+.idea/
+.vscode/

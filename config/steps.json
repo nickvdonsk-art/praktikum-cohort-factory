@@ -1,0 +1,105 @@
+{
+  "_comment": "Селекторы DOM админки Практикума. Заполнены по HTML модалки «Создание когорты» и прошлым находкам (поиск, кнопка «Добавить когорту»). Если вёрстка поменяется — ассистент правит здесь и в automation/server.py.",
+  "fields": {
+    "squad_type": {
+      "selector": ".edit-card__body #squad_type",
+      "kind": "dropdown",
+      "label": "Тип когорты"
+    },
+    "cohort": {
+      "selector": ".edit-card__body #cohort",
+      "kind": "dropdown",
+      "label": "Шаблон имени"
+    },
+    "name": {
+      "selector": ".edit-card__body #name",
+      "kind": "text",
+      "label": "Название"
+    },
+    "squad_number": {
+      "selector": ".edit-card__body #squad_number",
+      "kind": "number",
+      "label": "Номер"
+    },
+    "is_new_documents_flow": {
+      "selector": ".edit-card__body #is_new_documents_flow",
+      "kind": "checkbox",
+      "label": "Когорта проходит по новому флоу выпускных документов"
+    },
+    "subscriptions_limit": {
+      "selector": ".edit-card__body #subscriptions_limit",
+      "kind": "text",
+      "label": "Лимит подписок"
+    },
+    "date_begin": {
+      "selector": ".edit-card__body #date_begin",
+      "kind": "date",
+      "label": "Дата старта"
+    },
+    "lite_payment_deadline": {
+      "selector": ".edit-card__body #lite_payment_deadline",
+      "kind": "date-disabled",
+      "label": "Мягкий дедлайн для оплаты"
+    },
+    "payment_deadline": {
+      "selector": ".edit-card__body #payment_deadline",
+      "kind": "date-disabled",
+      "label": "Дедлайн добора"
+    },
+    "auto_compute_deadline_dates": {
+      "selector": ".edit-card__body #auto_compute_deadline_dates",
+      "kind": "checkbox",
+      "label": "Вычислить даты мягкого дедлайна для оплаты и дедлайна добора автоматически"
+    },
+    "auto_compute_date_end": {
+      "selector": ".edit-card__body #auto_compute_date_end",
+      "kind": "checkbox",
+      "label": "Вычислить дату окончания автоматически"
+    },
+    "date_end": {
+      "selector": ".edit-card__body #date_end",
+      "kind": "date-disabled",
+      "label": "Дата окончания"
+    },
+    "is_open": {
+      "selector": ".edit-card__body #is_open",
+      "kind": "checkbox",
+      "label": "Открыт"
+    },
+    "track": {
+      "selector": ".edit-card__body #track",
+      "kind": "dropdown",
+      "label": "Трек"
+    },
+    "curators_ids": {
+      "selector": ".edit-card__body #curators_ids",
+      "kind": "dropdown-multi",
+      "label": "Кураторы"
+    },
+    "calendar_layer_id": {
+      "selector": ".edit-card__body #calendar_layer_id",
+      "kind": "number",
+      "label": "Layer id календаря Яндекса"
+    }
+  },
+  "buttons": {
+    "add_cohort": {
+      "selector": ".squads__add-button",
+      "label": "Добавить когорту"
+    },
+    "save": {
+      "selector": "[data-test-id='edit-card-button-save']",
+      "label": "Сохранить"
+    },
+    "cancel": {
+      "selector": "[data-test-id='edit-card-button-cancel']",
+      "label": "Отмена"
+    }
+  },
+  "controls": {
+    "profession_search": {
+      "selector": "[data-test-id='faculties-profession-search-control']",
+      "label": "Поиск по факультетам"
+    }
+  }
+}
