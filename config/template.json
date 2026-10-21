@@ -1,13 +1,14 @@
 {
   "squad_type": "Стандартная",
-  "track": "0.0.5 трек 6 (новая структура Q3 2025)",
+  "track": "0.0.1 default",
   "is_open": true,
   "subscriptions_limit": "100",
   "calendar_layer_id": "",
-  "is_new_documents_flow": true,
+  "is_new_documents_flow": false,
   "auto_compute_deadline_dates": true,
   "auto_compute_date_end": true,
   "_comment": "Эталон заполнения. Заполняется автоматически чтением формы последней созданной когорты; кураторы всегда пустые.",
-  "name": "math-for-da-ds_cohort_238",
-  "squad_number": "238"
+  "name": "excel-for-work-full_cohort_1225",
+  "squad_number": "1225",
+  "cohort": "с последовательным номером"
 }

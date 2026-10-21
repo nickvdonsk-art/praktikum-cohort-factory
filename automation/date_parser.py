@@ -9,6 +9,11 @@ Excel: берём **только** листы Upskill и Reskill (в них жи
 `<слаг>_cohort_<номер>` и колонка «Дата старта когорты»). Остальные 38 листов
 (архивы, кураторы, Анонс и т.п.) игнорируем.
 
+CSV: читаем выгрузку «График запусков по бизнес-группам» (та же структура
+колонок, что и в Excel-листах Upskill/Reskill: B=cohort_name, C=дата старта,
+D=дата завершения, H=мягкий дедлайн, I=дедлайн добора). Разделитель — запятая,
+даты вида ДД.ММ.ГГГГ.
+
 Скриншот: распознаём текст через OCR (tesseract + pytesseract). Работает хуже
 Excel, поэтому Excel — основной путь, скриншот — запасной.
 
@@ -50,9 +55,21 @@ RESKILL_SHEETS = ("reskill",)
 COL_NAME, COL_BEGIN, COL_END, COL_LITE, COL_PAYMENT = 2, 3, 4, 8, 9
 
 # «cohort_» или пусто (когда в ячейке только «data-analyst_201» — такое бывает)
-COHORT_RE = re.compile(r"^([\w-]+?)(?:_cohort)?_(\d{2,3})$")
+# Имя когорты: `<слаг>_cohort_<номер>` или `<слаг>_cohort_<номер>merge`
+# (vit. пример фальш-когорты — machine-learning_cohort_33merge). Суффикс merge
+# означает, что при заведении тип когорты должен быть «фальш-когорта»,
+# а имя — `<слаг>_cohort_<номер>merge`.
+COHORT_RE = re.compile(r"^([\w-]+?)(?:_cohort)?_(\d{2,4})(merge)?$")
 DATE_RE = re.compile(r"(\d{4})-(\d{2})-(\d{2})")
 SLUG_RE = re.compile(r"[\w-]+")
+
+# Разбирает имя когорты вида slug_cohort_123[merge]. Возвращает (номер, is_merge)
+# или None, если имя не похоже на когорту заданного слага.
+def _cohort_from_name(slug: str, name: str) -> tuple[int, bool] | None:
+    m = re.match(rf"^{re.escape(slug)}(?:_cohort)?_(\d+)(merge)?$", name, re.IGNORECASE)
+    if not m:
+        return None
+    return int(m.group(1)), bool(m.group(2))
 
 # Допустимый диапазон годов. В колонке C всегда именно «Дата старта когорты»,
 # и в таблице есть когорты ещё с 2023-го — не отсекаем их. Верхняя граница
@@ -66,18 +83,17 @@ def _norm_date(value) -> str | None:
     if value is None:
         return None
     if isinstance(value, str):
-        # "2024-04-25" | "2024-04-25 00:00:00" | "25.04.2024" | "25/04/2024"
+        # "2024-04-25" | "2024-04-25 00:00:00" — ISO (YYYY-MM-DD)
         value = value.strip()
-        m = re.match(r"^(\d{4})-(\d{2})-(\d{2})", value) or re.match(
-            r"^(\d{1,2})[./](\d{1,2})[./](\d{4})$", value
-        )
-        if not m:
-            return None
-        if m.lastindex == 3:
-            y, m_, d = m.group(1), m.group(2), m.group(3)
+        m_iso = re.match(r"^(\d{4})-(\d{2})-(\d{2})", value)
+        if m_iso:
+            year, month, day = (int(m_iso.group(i)) for i in (1, 2, 3))
         else:
-            d, m_, y = m.group(1), m.group(2), m.group(3)
-        year, month, day = int(y), int(m_), int(d)
+            # "25.04.2024" | "25/04/2024" — ДД.ММ.ГГГГ
+            m_dmy = re.match(r"^(\d{1,2})[./](\d{1,2})[./](\d{4})$", value)
+            if not m_dmy:
+                return None
+            day, month, year = (int(m_dmy.group(i)) for i in (1, 2, 3))
     elif hasattr(value, "year"):  # datetime / pandas.Timestamp
         year, month, day = value.year, value.month, value.day
     else:
@@ -116,17 +132,19 @@ def _parse_excel(path: Path, slug: str) -> dict[int, dict[str, str]]:
             if not isinstance(col_name, str):
                 continue
             name = col_name.strip()
-            # Матчим только когорты указанного слага
-            m = re.match(rf"^{re.escape(slug)}(?:_cohort)?_(\d+)$", name)
-            if not m:
+            # Матчим только когорты указанного слага (в т.ч. с суффиксом merge)
+            parsed = _cohort_from_name(slug, name)
+            if parsed is None:
                 continue
-            num = int(m.group(1))
+            num, is_merge = parsed
             dates = {
                 "begin":        _norm_date(row[COL_BEGIN - 1].value),   # C — старт
                 "end":          _norm_date(row[COL_END - 1].value),     # D — завершение
                 "lite_payment": _norm_date(row[COL_LITE - 1].value),    # H — мягкий дедлайн
                 "payment":      _norm_date(row[COL_PAYMENT - 1].value), # I — дедлайн добора
             }
+            if is_merge:
+                dates["merge"] = True
             if dates["begin"] is None:
                 print(f"  ⚠ строка {rownum}: {name} — дату старта не распознал, пропускаю")
                 continue
@@ -138,6 +156,45 @@ def _parse_excel(path: Path, slug: str) -> dict[int, dict[str, str]]:
             found[num] = dates
 
     wb.close()
+    return found
+
+
+def _parse_csv(path: Path, slug: str) -> dict[int, dict[str, str]]:
+    """Читаем CSV-выгрузку «График запусков по бизнес-группам».
+
+    Структура та же, что в листах Upskill/Reskill Excel-файла:
+    колонка 2 — cohort_name, 3 — дата старта, 4 — дата завершения,
+    8 — мягкий дедлайн, 9 — дедлайн добора. Даты в CSV — ДД.ММ.ГГГГ,
+    формат оставляем in-memory как есть и отдаём в _norm_date.
+    """
+    import csv
+
+    found: dict[int, dict[str, str]] = {}
+    with path.open(newline="", encoding="utf-8-sig") as fh:
+        reader = csv.reader(fh)
+        for rownum, row in enumerate(reader, start=1):
+            if rownum == 1:
+                continue  # шапка
+            if len(row) < COL_PAYMENT:
+                continue
+            name = (row[COL_NAME - 1] or "").strip()
+            if not name:
+                continue
+            parsed = _cohort_from_name(slug, name)
+            if parsed is None:
+                continue
+            num, is_merge = parsed
+            if num in found:
+                continue
+            entry = {
+                "begin":        _norm_date(row[COL_BEGIN - 1]),
+                "end":          _norm_date(row[COL_END - 1]),
+                "lite_payment": _norm_date(row[COL_LITE - 1]),
+                "payment":      _norm_date(row[COL_PAYMENT - 1]),
+            }
+            if is_merge:
+                entry["merge"] = True
+            found[num] = entry
     return found
 
 
@@ -220,10 +277,12 @@ def main() -> None:
     ext = path.suffix.lower()
     if ext in (".xlsx", ".xlsm", ".xls"):
         dates = _parse_excel(path, args.slug)
+    elif ext == ".csv":
+        dates = _parse_csv(path, args.slug)
     elif ext in (".png", ".jpg", ".jpeg", ".bmp", ".webp"):
         dates = _parse_image(path, args.slug)
     else:
-        print(f"Неподдерживаемый формат: {ext}. Пришли Excel (.xlsx) или скриншот (.png/.jpg).")
+        print(f"Неподдерживаемый формат: {ext}. Пришли Excel (.xlsx), CSV (.csv) или скриншот (.png/.jpg).")
         sys.exit(1)
 
     if not dates:

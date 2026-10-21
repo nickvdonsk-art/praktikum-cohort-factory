@@ -15,6 +15,7 @@ import functools
 import json
 import os
 import queue
+import re
 import tempfile
 import threading
 from pathlib import Path
@@ -33,6 +34,10 @@ ADMIN_URL = "https://admin.praktikum.yandex-team.ru/squads-faculties/"
 
 STEPS = json.loads(STEPS_JSON.read_text(encoding="utf-8"))
 
+# Максимум элементов в «снимке» страницы — на тяжёлых страницах со списками
+# когорт элементов тысячи, полный обход вешает Playwright-поток.
+_SNAPSHOT_MAX = 600
+
 app = FastAPI(title="Заведение когорт by OMS", version="0.2.0")
 app.add_middleware(
     CORSMiddleware, allow_origins=["*"], allow_methods=["*"], allow_headers=["*"]
@@ -42,6 +47,19 @@ app.add_middleware(
 _browser = None
 _context = None
 _page: Page | None = None
+
+# Флаги Chromium: снижаем фоновую нагрузку (анимации, фоновые таймеры, звук).
+# Страница админки со списком когорт (тысячи строк, infinite scroll) сама по себе
+# очень тяжёлая — эти флаги не дают ей выедать процессор сверх меры.
+_CHROMIUM_ARGS = [
+    "--disable-backgrounding-occluded-windows",
+    "--disable-renderer-backgrounding",
+    "--disable-background-timer-throttling",
+    "--disable-backgrounding-occluded-windows",
+    "--mute-audio",
+    "--force-prefers-reduced-motion",
+    "--disable-lazy-image-loading",
+]
 
 # Playwright sync нельзя звать из разных потоков: FastAPI исполняет эндпоинты
 # в пуле потоков, и параллельный вызов из другого потока ломает greenlet
@@ -102,12 +120,23 @@ class CreateRequest(BaseModel):
     lite_payment_deadline: str | None = Field(default=None, description="Мягкий дедлайн (кол. H Excel)")
     payment_deadline: str | None = Field(default=None, description="Дедлайн добора (кол. I Excel)")
     template: dict = Field(default_factory=dict, description="Переопределения полей эталона")
+    is_merge: bool = Field(default=False, description="Фальш-когорта: если в графике имя вида slug_cohort_Nmerge — тип «фальш-когорта», имя с суффиксом merge")
     confirm_reference: bool = True
 
 
 def _sel(name: str) -> str:
     """Селектор поля по имени из steps.json."""
     return STEPS["fields"][name]["selector"]
+
+
+def _slug_from_name(name: str) -> str:
+    """Из «excel-for-work-full_cohort_1224merge» достаём слаг «excel-for-work-full»."""
+    m = re.search(r"^(.*?)_cohort_\d+?merge$", name)
+    if m:
+        return m.group(1)
+    # без merge: «excel-for-work-full_cohort_1224»
+    m = re.search(r"^(.*?)_cohort_\d+$", name)
+    return m.group(1) if m else name
 
 
 def _loc(page: Page, name_or_selector: str):
@@ -134,12 +163,17 @@ def _wait(page: Page, selector: str, timeout_ms: int) -> None:
 
 
 def _visible_text(page: Page) -> str:
-    """Текстовый 'снимок' страницы для навигации ассистента."""
+    """Текстовый 'снимок' страницы для навигации ассистента.
+
+    На тяжёлых страницах (список когорт с infinite scroll) элементов бывают
+    тысячи — обходим максимум _SNAPSHOT_MAX, чтобы не вешать pw-поток.
+    """
     chunks: list[str] = []
     loc = page.locator("h1, h2, h3, .modal-title, .card-header, button, "
                        "label, input[type=text], input[type=number], "
                        "input[type=date], input[type=checkbox]")
     n = loc.count()
+    n = min(n, _SNAPSHOT_MAX)
     for i in range(n):
         e = loc.nth(i)
         tag = e.evaluate("el => el.tagName.toLowerCase()")
@@ -207,16 +241,45 @@ def _open_cohort_form(page: Page, slug: str | None = None) -> None:
         search.press("Backspace")
         search.type(slug[-1])
         page.wait_for_timeout(800)  # дать списку открыться
-        # выбрать пункт списка, содержащий слаг (по тексту, видимый)
-        item = page.locator(
+        # выбрать пункт списка. В списке могут быть похожие слаги
+        # («excel-for-work-full» и «excel-for-work-full-extra») — предпочитаем
+        # ТОЧНОЕ совпадение текста пункта со слагом, а не просто содержащее.
+        opts = page.locator(
             ".prisma-combobox__option:visible, [role=option]:visible, "
             "li:visible, .dropdown__item:visible"
-        ).filter(has_text=slug)
-        try:
-            item.first.click(timeout=8000)
-        except PWTimeout:
-            # fallback — точечно по тексту в любом элементе под поиском
-            page.locator(f"text='{slug}'").first.click(timeout=5000)
+        )
+        clicked = False
+        # Предпочитаем вариант, где слаг — это ЦЕЛЫЙ слаг (не подстрока другого):
+        # в списке могут быть похожие факультеты — «excel-for-work-full» и
+        # «excel-for-work-full-extra». Точно совпавший текст или первый токен
+        # (слаг, отрезанный от описания) — наш; содержащий «-extra» — проходим.
+        for i in range(opts.count()):
+            txt = (opts.nth(i).inner_text() or "").strip()
+            first_word = txt.split()[0].strip(",") if txt.split() else ""
+            if txt == slug or first_word == slug or txt.rstrip().rstrip("-").strip() == slug:
+                opts.nth(i).click(timeout=5000)
+                clicked = True
+                break
+        if not clicked:
+            # fallback: предпочитаем пункт, текст которого НАЧИНАЕТСЯ со слага и
+            # за которым нет «-…» (т.е. не «-extra»). Берём первый подходящий.
+            chosen = None
+            for i in range(opts.count()):
+                txt = (opts.nth(i).inner_text() or "").strip()
+                w = txt.split()[0].strip(",")
+                if w.startswith(slug) and len(w) == len(slug):
+                    chosen = opts.nth(i)
+                    break
+            if chosen is None:
+                # последний запасной — первый пункт, содержащий слаг
+                try:
+                    chosen = opts.filter(has_text=slug).first
+                except Exception:
+                    chosen = None
+            if chosen is not None:
+                chosen.click(timeout=8000)
+            else:
+                page.locator(f"text='{slug}'").first.click(timeout=5000)
         page.wait_for_timeout(1200)  # дождаться перехода на страницу факультета
     _wait(page, STEPS["buttons"]["add_cohort"]["selector"], 15000)
     page.locator(STEPS["buttons"]["add_cohort"]["selector"]).first.click()
@@ -248,7 +311,12 @@ def _read_current_form(page: Page) -> dict:
             out[key] = loc.is_checked()
         elif kind == "dropdown" or kind == "dropdown-multi":
             try:
-                out[key] = page.locator(f"{sel} .dropdown__toggle, {sel} [role=combobox]").first.inner_text().strip()
+                val = page.locator(f"{sel} .dropdown__toggle, {sel} [role=combobox]").first.inner_text().strip()
+                # Плейсхолдер незаполненного дропдауна («Выберите …») в эталон не тащим:
+                # тип когорты при создании ВСЕГДА «Стандартная» (фиксированно, требование ОМС).
+                if key == "squad_type" and val.startswith("Выберите"):
+                    val = "Стандартная"
+                out[key] = val
             except Exception:
                 out[key] = ""
         else:  # text, number, date…
@@ -292,11 +360,28 @@ def open_browser(req: OpenRequest):
 
     if _browser is None:
         pw = sync_playwright().start()
-        _browser = pw.chromium.launch(headless=False)
+        _browser = pw.chromium.launch(headless=False, args=_CHROMIUM_ARGS,
+                                      ignore_default_args=["--enable-automation"])
         _context = _browser.new_context()
     _page = _context.new_page()
     _page.goto(req.url or ADMIN_URL, wait_until="domcontentloaded")
     return {"ok": True, "url": _page.url}
+
+
+@app.post("/api/goto")
+@_pw_serialized
+def goto_url(body: dict):
+    """Навигация в ТЕКУЩЕЙ вкладке на другой URL (без новой страницы).
+
+    Нужно, чтобы уводить браузер с тяжёлой страницы списка когорт
+    (тысячи строк, infinite scroll, парализует Playwright) обратно на
+    лёгкий список факультетов.
+    """
+    page = _active_page()
+    url = (body.get("url") or ADMIN_URL).strip()
+    page.goto(url, wait_until="domcontentloaded")
+    page.wait_for_timeout(500)
+    return {"ok": True, "url": page.url}
 
 
 @app.get("/api/snapshot")
@@ -413,7 +498,12 @@ def create_cohort(req: CreateRequest):
     # форма уже открыта (ассистент сделал /api/open_cohort_form)
     _wait(page, "div[data-test-id='edit-card']", 15000)
 
-    squad_type = req.template.get("squad_type", "Стандартная")
+    # Тип когорты: по умолчанию «Стандартная» (требование ОМС). Если в графике
+    # имя когорты вида `<slug>_cohort_<N>merge` (фальш-когорта) — тип «фальш-когорта».
+    if req.is_merge:
+        squad_type = "фальш-когорта"
+    else:
+        squad_type = "Стандартная"
     _dropdown_select(page, _sel("squad_type"), squad_type)
 
     if req.template.get("track"):
@@ -520,6 +610,13 @@ def create_cohort(req: CreateRequest):
                     loc.click()
             except Exception:
                 pass
+
+    # Фальш-когорта: имя задаём вручную как <slug>_cohort_<N>merge (форма его
+    # сама не подставит — шаблон «с последовательным номером» даёт только «_N»).
+    if req.is_merge:
+        slug = _slug_from_name(actual_name_val := page.locator("#name").first.input_value())
+        merge_name = f"{slug}_cohort_{num}merge"
+        _loc(page, "name").first.fill(merge_name)
 
     # Согласование имени/номера с диапазоном пользователя.
     actual_name = page.locator("#name").first.input_value()
