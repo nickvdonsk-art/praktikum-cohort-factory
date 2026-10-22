@@ -16,4 +16,4 @@ test-results/
 .env
 .DS_Store
 .idea/
-.vscode/
+.vscode/presentation.html
