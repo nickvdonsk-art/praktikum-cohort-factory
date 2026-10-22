@@ -1,0 +1,70 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<link href="https://fonts.googleapis.com/css2?family=Montserrat:wght@400;600&display=swap" rel="stylesheet">
+<meta charset="UTF-8">
+<title>praktikum-cohort-factory – Презентация</title>
+<style>
+  body { margin:0; font-family:'Montserrat',Arial,Helvetica,sans-serif; background:linear-gradient(135deg, #e0f7fa, #e8eaf6); overflow:hidden; }
+  .slide { width:100vw; height:100vh; display:none; flex-direction:column; justify-content:center; align-items:center; background:#fff; padding:60px; box-sizing:border-box; box-shadow:0 4px 12px rgba(0,0,0,0.1); border-radius:8px; margin:20px; }
+  .slide.active { display:flex; }
+  h1 { font-size:56px; font-weight:600; margin:0; color:#37474f; }
+  h2 { font-size:38px; font-weight:600; margin:10px 0; color:#607d8b; }
+  p, li, pre { font-size:22px; line-height:1.5; color:#455a64; }
+  ul { padding-left:20px; }
+  .footer { position:absolute; bottom:20px; right:30px; font-size:14px; color:#90a4ae; }
+  .nav { position:fixed; top:50%; left:20px; font-size:32px; color:#90a4ae; cursor:pointer; user-select:none; }
+  .nav.right { left:auto; right:20px; }
+</style>
+</head>
+<body>
+<div class="slide"><h1>praktikum‑cohort‑factory</h1><h2>Кратко о крутом инструменте</h2><p class="footer">© Николай Дубинин, 2026</p></div>
+<div class="slide"><h2>Что это?</h2><ul>
+<li>Автоматизированный сервис создания когорт (потоков) в Яндекс Практикуме.</li>
+<li>Работает через локальный сервис‑прокси и Playwright‑драйвер.</li>
+<li>Выполняет весь цикл: парсинг дат, открытие админки, заполнение формы, сохранение.</li>
+</ul></div>
+<div class="slide"><h2>Ключевые возможности</h2><ul>
+<li>Одним запросом собирает все 5 входных параметров.</li>
+<li>Парсит Excel/xlsx‑файлы с графиком запусков.</li>
+<li>Детектирует логин пользователя, ждёт вход в админку.</li>
+<li>Создаёт диапазон когорт без пауз и ручных подтверждений.</li>
+<li>Отчёт в конце с перечнем созданных когорт.</li>
+</ul></div>
+<div class="slide"><h2>Технический стек</h2><ul>
+<li>Python 3, виртуальное окружение.</li>
+<li>Playwright + Chromium (инкогнито‑режим).</li>
+<li>Pandas + Openpyxl для парсинга Excel.</li>
+<li>Локальный HTTP‑сервер (`automation/server.py`).</li>
+<li>REST‑API (`/api/*`) для управления браузером.</li>
+</ul></div>
+<div class="slide"><h2>Пользовательский сценарий</h2><ol>
+<li>Пользователь вводит слаг курса, ссылку на страницу, диапазон номеров, эталонную когорту и файл‑таблицу.</li>
+<li>Скрипт сохраняет `config/input.json` и запускает `date_parser.py`.</li>
+<li>Запускается `automation/run.sh`; пользователь логинится в окно браузера.</li>
+<li>Сервис автоматически создаёт все когорты, используя шаблон из `template.json`.</li>
+<li>По завершении – выводит список созданных когорт.</li>
+</ol></div>
+<div class="slide"><h2>Плюсы для коллег</h2><ul>
+<li>Сокращает рутину – создаёт десятки когорт за секунды.</li>
+<li>Исключает человеческие ошибки в датах и номерах.</li>
+<li>Унифицирует параметры всех когорт (тип, настройки, кураторы).</li>
+<li>Легко адаптировать под любой курс, просто менять входные данные.</li>
+</ul></div>
+<div class="slide"><h2>Как запустить?</h2><pre>
+git clone &lt;repo‑url&gt;
+cd &lt;repo&gt;
+python3 -m venv .venv && source .venv/bin/activate
+pip install -r requirements.txt
+playwright install chromium
+python3 automation/driver.py --selftest
+# затем `python3 automation/date_parser.py …` и `bash automation/run.sh`
+</pre></div>
+<div class="slide"><h2>Дальнейшее развитие</h2><ul>
+<li>Поддержка CSV и Google‑Sheets без локального файла.</li>
+<li>Интеграция с внутренним трекером для автоматического создания тикетов.</li>
+<li>Визуальная аналитика: графики количества созданных когорт.</li>
+</ul></div>
+<div class="slide"><h2>Контакты</h2><p>Николай Дубинин (nickdubinin)</p><p>Операционный менеджер сопровождения</p></div>
+</body>
+</html>
