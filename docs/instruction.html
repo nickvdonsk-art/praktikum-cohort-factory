@@ -33,7 +33,7 @@
     <div>
       <h1>Когорты без рутины.<br><span class="cg-gradient">Больше времени на важное.</span></h1>
       <p class="cg-lead">Отправь один запрос — нейросеть спросит всё недостающее одним сообщением, сама найдёт даты в твоём графике запусков, возьмёт настройки из когорты-эталона и пачкой заведёт когорты в админке. От тебя — вход в браузер и финальная проверка.</p>
-      <div class="cg-actions"><a class="cg-btn cg-primary" href="https://drive.google.com/file/d/1ylTaNpJUmbTe27-G7SwyfAIph9ySfs-1/view?usp=sharing" target="_blank" rel="noopener">Скачать скилл для Claude Code <span>↗</span></a><a class="cg-btn cg-secondary" href="#cg-start">Начать работу ↓</a></div>
+      <div class="cg-actions"><a class="cg-btn cg-primary" href="https://github.com/nickvdonsk-art/praktikum-cohort-factory" target="_blank" rel="noopener">Репозиторий на GitHub <span>↗</span></a><a class="cg-btn cg-secondary" href="#cg-start">Начать работу ↓</a></div>
     </div>
     <div class="cg-art" aria-label="Иллюстрация автоматизации создания когорт">
       <div class="cg-window">
@@ -76,8 +76,13 @@
   <div class="cg-overline">02 · Подготовка</div>
   <h2>Установка за несколько минут</h2>
   <p class="cg-sub">Два пути на выбор: быстрый — через скилл для Claude Code (он сам склонирует и настроит проект), или классический — руками через терминал (нужны Python 3.10+ и терминал).</p>
-  <div class="cg-note safe" id="cg-skill"><strong>Вариант А · Скилл practicum-cohort-factory (рекомендую)</strong>Скачай файл скилла: <a href="https://drive.google.com/file/d/1ylTaNpJUmbTe27-G7SwyfAIph9ySfs-1/view?usp=sharing" target="_blank" rel="noopener">praktikum-cohort-factory.skill с Google&nbsp;Диска ↗</a>. Установи его в Claude Code — и всё: при первом запросе («заведи когорты…») скилл сам склонирует репозиторий, создаст окружение, поставит зависимости и запустит сервис. Ничего руками делать не нужно, вариант Б ниже можно пропустить.</div>
-  <div class="cg-overline" style="margin-top:26px">Вариант Б · Ручная установка</div>
+  <div class="cg-overline" style="margin-top:26px">Вариант А · Установка через репозиторий (рекомендую)</div>
+  <p class="cg-sub" style="margin-bottom:14px">Выполни команды в терминале — так ты получишь версию сервиса с последними обновлениями и фиксами. Скилл обновляется локально только у владельца и не обновляется у всех автоматически, поэтому установка из репозитория — надёжнее.</p>
+  <div class="cg-codewrap"><div class="cg-code-label">Шаг 1 · Склонировать проект</div><pre>git clone https://github.com/nickvdonsk-art/praktikum-cohort-factory
+cd praktikum-cohort-factory</pre></div>
+  <div class="cg-overline" style="margin-top:26px">Вариант Б · Скилл practicum-cohort-factory</div>
+  <div class="cg-note safe"><strong>Плюсы и минусы скилла</strong>Файл скилла можно скачать <a href="https://drive.google.com/file/d/1ylTaNpJUmbTe27-G7SwyfAIph9ySfs-1/view?usp=sharing" target="_blank" rel="noopener">с Google&nbsp;Диска ↗</a> и установить в Claude Code: при первом запросе («заведи когорты…») он сам склонирует репозиторий, создаст окружение, поставит зависимости и запустит сервис. Но помни: скилл обновляется локально только у владельца и не обновляется у всех — для свежей версии сервиса лучше ставь из репозитория (вариант А выше).</div>
+  <div class="cg-overline" style="margin-top:26px">Вариант В · Ручная установка по шагам</div>
   <div class="cg-codewrap"><div class="cg-code-label">Шаг 1 · Склонировать проект</div><pre>git clone https://github.com/nickvdonsk-art/praktikum-cohort-factory
 cd praktikum-cohort-factory</pre></div>
   <div class="cg-codewrap"><div class="cg-code-label">Шаг 2 · Создать виртуальное окружение</div><pre>python3 -m venv .venv
@@ -96,7 +101,7 @@ playwright install chromium</pre></div>
     <div class="cg-card"><div class="cg-icon">2</div><h3>Прямая ссылка на когорты слага</h3><p>Открой факультет/профессию в админке и скопируй URL из адресной строки. Поиск по слагу не используется — он цепляет похожие факультеты (например <code class="cg-inlinecode">-extra</code>).</p></div>
     <div class="cg-card"><div class="cg-icon">3</div><h3>Диапазон когорт</h3><p>С какой по какую создавать, например 1224–1247.</p></div>
     <div class="cg-card"><div class="cg-icon">4</div><h3>Эталонная когорта</h3><p>Обычно последняя созданная (<code class="cg-inlinecode">слаг_cohort_1223</code>). Её настройки возьмутся как шаблон; кураторы — всегда пустыми.</p></div>
-    <div class="cg-card"><div class="cg-icon">5</div><h3>Файл «График запусков по бизнес-группам»</h3><p>Желательно CSV, можно Excel. Таблица приватная — по ссылке не откроется, приложи файлом в чат. Из него берутся старт, окончание и оба дедлайна.</p></div>
+    <div class="cg-card"><div class="cg-icon">5</div><h3>Файл «График запусков по бизнес-группам»</h3><p>Желательно CSV, можно Excel. Таблица приватная — по ссылке не откроется, приложи файлом в чат. Из него берутся старт, окончание и оба дедлайна.</p><img src="export-dates.gif" alt="Как выгрузить график запусков в CSV" loading="lazy" style="width:100%;border-radius:10px;border:1px solid var(--line);margin-top:12px"></div>
     <div class="cg-card"><div class="cg-icon">✓</div><h3>Подтверждение дат</h3><p>Нейросеть покажет найденные даты кратко и спросит подтверждение — один раз, перед заведением.</p></div>
   </div>
   <div class="cg-note"><strong>Как проходит запуск</strong>После подтверждения дат откроется браузер с админкой — войди сам. Писать «я вошёл» не нужно: процесс сам видит вход и сразу заводит весь диапазон пачкой, без остановок и отчётов между когортами. В конце — один общий список созданных когорт.</div>
